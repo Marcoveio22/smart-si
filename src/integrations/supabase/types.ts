@@ -185,6 +185,9 @@ export type Database = {
       }
       processamentos: {
         Row: {
+          arquivo_consolidado_gerado_em: string | null
+          arquivo_consolidado_nome: string | null
+          arquivo_consolidado_path: string | null
           arquivo_diaria: string | null
           arquivo_historico: string | null
           clientes_red: number | null
@@ -203,6 +206,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          arquivo_consolidado_gerado_em?: string | null
+          arquivo_consolidado_nome?: string | null
+          arquivo_consolidado_path?: string | null
           arquivo_diaria?: string | null
           arquivo_historico?: string | null
           clientes_red?: number | null
@@ -221,6 +227,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          arquivo_consolidado_gerado_em?: string | null
+          arquivo_consolidado_nome?: string | null
+          arquivo_consolidado_path?: string | null
           arquivo_diaria?: string | null
           arquivo_historico?: string | null
           clientes_red?: number | null
