@@ -26,7 +26,6 @@ function toDate(v: any): Date {
   if (!v) return new Date();
   if (v instanceof Date) return v;
   if (typeof v === "number") {
-    // Excel serial date
     const utc = (v - 25569) * 86400 * 1000;
     return new Date(utc);
   }
@@ -49,8 +48,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
     arquivoDiaria: z.string(),
     arquivoHistorico: z.string(),
   }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
+  .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     await supabaseAdmin.from("processamentos").update({ status: "processando" }).eq("id", data.processamentoId);
@@ -72,19 +70,17 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const diaria: Row[] = XLSX.utils.sheet_to_json(wbD.Sheets[wbD.SheetNames[0]]);
       const historico: Row[] = XLSX.utils.sheet_to_json(wbH.Sheets[wbH.SheetNames[0]]);
 
-      // Get a default loja
       const { data: lojas } = await supabaseAdmin.from("lojas").select("id").limit(1);
       const defaultLoja = lojas?.[0]?.id ?? null;
 
-      // Parse transações
       const transacoes = diaria.map((r) => ({
         numero_cartao: String(pick(r, ["numero_cartao", "cartao", "card"]) ?? "").trim(),
         valor: toNum(pick(r, ["valor", "value", "amount"])),
         data_transacao: toDate(pick(r, ["data_transacao", "data", "date"])).toISOString(),
         status: String(pick(r, ["status"]) ?? "aprovada"),
+        _orig: r,
       })).filter((t) => t.numero_cartao);
 
-      // Aggregate per cartão
       const agg = new Map<string, { total: number; count: number; ultima: Date; valores: number[] }>();
       for (const t of transacoes) {
         const cur = agg.get(t.numero_cartao) ?? { total: 0, count: 0, ultima: new Date(0), valores: [] };
@@ -96,14 +92,12 @@ export const processarArquivos = createServerFn({ method: "POST" })
         agg.set(t.numero_cartao, cur);
       }
 
-      // Merge histórico
       const histMap = new Map<string, Row>();
       for (const h of historico) {
         const k = String(pick(h, ["numero_cartao", "cartao"]) ?? "").trim();
         if (k) histMap.set(k, h);
       }
 
-      // Compute thresholds (P75 / P90 of total_gasto)
       const totals: number[] = [];
       for (const [k, v] of agg) {
         const h = histMap.get(k);
@@ -114,17 +108,18 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const p75 = percentile(totals, 75);
       const p90 = percentile(totals, 90);
 
-      // Clear existing transações for this processamento window? We'll just append.
-      // Insert new transações (chunked)
-      const txRows = transacoes.map((t) => ({ ...t, loja_id: defaultLoja }));
+      const txRows = transacoes.map((t) => ({
+        numero_cartao: t.numero_cartao, valor: t.valor, data_transacao: t.data_transacao,
+        status: t.status, loja_id: defaultLoja,
+      }));
       for (let i = 0; i < txRows.length; i += 500) {
-        const chunk = txRows.slice(i, i + 500);
-        await supabaseAdmin.from("transacoes").insert(chunk);
+        await supabaseAdmin.from("transacoes").insert(txRows.slice(i, i + 500));
       }
 
-      // Build / upsert clientes + ratings + alertas
       let cDia = 0, cGold = 0, cSil = 0, cRed = 0, cTrust = 0;
       const alertas: any[] = [];
+      const clientesClassif: any[] = [];
+      const ratingByCartao = new Map<string, { rating: string; score: number; trusted: boolean; ocorrencias: number; totalGasto: number; totalCompras: number }>();
 
       for (const [cartao, v] of agg) {
         const h = histMap.get(cartao);
@@ -134,13 +129,11 @@ export const processarArquivos = createServerFn({ method: "POST" })
         const totalGasto = v.total + histTotal;
         const totalCompras = v.count + histCount;
 
-        // Classification: RED > DIAMOND > GOLD > SILVER
         let rating = "SILVER";
         if (ocorrencias >= 3) rating = "RED";
         else if (totalGasto >= p90) rating = "DIAMOND";
         else if (totalGasto >= p75) rating = "GOLD";
 
-        // Score de confiança: simple heuristic
         const score = Math.max(0, Math.min(100, 100 - ocorrencias * 20 + Math.log10(totalGasto + 1) * 5));
         const isTrusted = rating !== "RED" && score >= 80 && totalCompras >= 5;
         if (isTrusted) cTrust++;
@@ -149,7 +142,8 @@ export const processarArquivos = createServerFn({ method: "POST" })
         else if (rating === "SILVER") cSil++;
         else if (rating === "RED") cRed++;
 
-        // Upsert cliente
+        ratingByCartao.set(cartao, { rating, score, trusted: isTrusted, ocorrencias, totalGasto, totalCompras });
+
         const { data: existing } = await supabaseAdmin
           .from("clientes").select("id, rating_final").eq("numero_cartao", cartao).maybeSingle();
 
@@ -157,14 +151,8 @@ export const processarArquivos = createServerFn({ method: "POST" })
         if (existing) {
           clienteId = existing.id;
           await supabaseAdmin.from("clientes").update({
-            total_gasto: totalGasto,
-            total_compras: totalCompras,
-            ultima_compra: v.ultima.toISOString(),
-            rating_final: rating,
-            score_confianca: score,
-            is_trusted: isTrusted,
-            ocorrencias,
-            loja_id: defaultLoja,
+            total_gasto: totalGasto, total_compras: totalCompras, ultima_compra: v.ultima.toISOString(),
+            rating_final: rating, score_confianca: score, is_trusted: isTrusted, ocorrencias, loja_id: defaultLoja,
           }).eq("id", clienteId);
           if (existing.rating_final !== rating) {
             await supabaseAdmin.from("rating_logs").insert({
@@ -174,41 +162,92 @@ export const processarArquivos = createServerFn({ method: "POST" })
           }
         } else {
           const { data: ins } = await supabaseAdmin.from("clientes").insert({
-            numero_cartao: cartao,
-            total_gasto: totalGasto,
-            total_compras: totalCompras,
-            ultima_compra: v.ultima.toISOString(),
-            rating_final: rating,
-            score_confianca: score,
-            is_trusted: isTrusted,
-            ocorrencias,
-            loja_id: defaultLoja,
+            numero_cartao: cartao, total_gasto: totalGasto, total_compras: totalCompras,
+            ultima_compra: v.ultima.toISOString(), rating_final: rating, score_confianca: score,
+            is_trusted: isTrusted, ocorrencias, loja_id: defaultLoja,
           }).select("id").single();
           clienteId = ins!.id;
         }
 
-        // Alertas: alta frequência (>10 transações no dia) ou RED
+        clientesClassif.push({
+          numero_cartao: cartao, rating, score_confianca: Number(score.toFixed(2)),
+          trusted: isTrusted ? "SIM" : "NÃO", total_gasto: totalGasto, total_compras: totalCompras,
+          ocorrencias, ultima_compra: v.ultima.toISOString().slice(0, 10),
+        });
+
         if (v.count >= 10) {
           alertas.push({
-            cliente_id: clienteId, loja_id: defaultLoja, tipo: "alta_frequencia",
-            gravidade: "alta", descricao: `Cliente realizou ${v.count} transações em curto período.`,
+            cliente_id: clienteId, loja_id: defaultLoja, tipo: "alta_frequencia", gravidade: "alta",
+            descricao: `Cliente realizou ${v.count} transações em curto período.`,
+            _cartao: cartao,
           });
         }
         if (rating === "RED") {
           alertas.push({
-            cliente_id: clienteId, loja_id: defaultLoja, tipo: "comportamento_suspeito",
-            gravidade: "alta", descricao: `Cliente classificado como RED (${ocorrencias} ocorrências).`,
+            cliente_id: clienteId, loja_id: defaultLoja, tipo: "comportamento_suspeito", gravidade: "alta",
+            descricao: `Cliente classificado como RED (${ocorrencias} ocorrências).`,
+            _cartao: cartao,
           });
         }
       }
 
       if (alertas.length) {
-        for (let i = 0; i < alertas.length; i += 500) {
-          await supabaseAdmin.from("alertas").insert(alertas.slice(i, i + 500));
+        const toInsert = alertas.map(({ _cartao, ...a }) => a);
+        for (let i = 0; i < toInsert.length; i += 500) {
+          await supabaseAdmin.from("alertas").insert(toInsert.slice(i, i + 500));
         }
       }
 
       const faturamento = transacoes.reduce((s, t) => s + t.valor, 0);
+
+      // === GERAR EXCEL CONSOLIDADO ===
+      const baseDiariaEnriq = transacoes.map((t) => {
+        const r = ratingByCartao.get(t.numero_cartao);
+        return {
+          ...t._orig,
+          numero_cartao: t.numero_cartao,
+          valor: t.valor,
+          data_transacao: t.data_transacao,
+          rating: r?.rating ?? "SILVER",
+          score_confianca: r ? Number(r.score.toFixed(2)) : 0,
+          trusted: r?.trusted ? "SIM" : "NÃO",
+        };
+      });
+
+      const alertasSheet = alertas.map((a) => ({
+        numero_cartao: a._cartao, tipo: a.tipo, gravidade: a.gravidade, descricao: a.descricao,
+      }));
+
+      const monitoramento = [
+        { metrica: "Total de Transações", valor: transacoes.length },
+        { metrica: "Total de Clientes", valor: agg.size },
+        { metrica: "Faturamento Total", valor: faturamento },
+        { metrica: "Threshold GOLD (P75)", valor: Number(p75.toFixed(2)) },
+        { metrica: "Threshold DIAMOND (P90)", valor: Number(p90.toFixed(2)) },
+        { metrica: "Clientes DIAMOND", valor: cDia },
+        { metrica: "Clientes GOLD", valor: cGold },
+        { metrica: "Clientes SILVER", valor: cSil },
+        { metrica: "Clientes RED", valor: cRed },
+        { metrica: "Clientes TRUSTED", valor: cTrust },
+        { metrica: "Total de Alertas", valor: alertas.length },
+        { metrica: "Gerado em", valor: new Date().toISOString() },
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(baseDiariaEnriq), "Base Diaria Enriquecida");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(alertasSheet.length ? alertasSheet : [{ info: "Nenhum alerta" }]), "Alertas");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monitoramento), "Monitoramento");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientesClassif), "Clientes Classificados");
+
+      const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const consolidadoNome = `CONSOLIDADO_${stamp}.xlsx`;
+      const consolidadoPath = `${data.processamentoId}/${consolidadoNome}`;
+      const up = await supabaseAdmin.storage.from("excel-uploads").upload(consolidadoPath, buf, {
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        upsert: true,
+      });
+      if (up.error) throw up.error;
 
       await supabaseAdmin.from("processamentos").update({
         status: "concluido",
@@ -218,6 +257,9 @@ export const processarArquivos = createServerFn({ method: "POST" })
         clientes_trusted: cTrust,
         threshold_diamond: p90,
         threshold_gold: p75,
+        arquivo_consolidado_nome: consolidadoNome,
+        arquivo_consolidado_path: consolidadoPath,
+        arquivo_consolidado_gerado_em: new Date().toISOString(),
       }).eq("id", data.processamentoId);
 
       return {
@@ -227,6 +269,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
         diamond: cDia, gold: cGold, silver: cSil, red: cRed, trusted: cTrust,
         alertas: alertas.length,
         faturamento, p75, p90,
+        consolidadoNome, consolidadoPath,
       };
     } catch (e: any) {
       await supabaseAdmin.from("processamentos").update({
@@ -234,4 +277,15 @@ export const processarArquivos = createServerFn({ method: "POST" })
       }).eq("id", data.processamentoId);
       throw e;
     }
+  });
+
+export const getConsolidadoUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ path: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("excel-uploads").createSignedUrl(data.path, 60 * 10);
+    if (error) throw error;
+    return { url: signed.signedUrl };
   });
