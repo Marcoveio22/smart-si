@@ -14,7 +14,355 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alertas: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          descricao: string | null
+          gravidade: string
+          id: string
+          loja_id: string | null
+          status: string
+          tipo: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          gravidade?: string
+          id?: string
+          loja_id?: string | null
+          status?: string
+          tipo: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          gravidade?: string
+          id?: string
+          loja_id?: string | null
+          status?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clientes: {
+        Row: {
+          created_at: string
+          id: string
+          is_trusted: boolean
+          loja_id: string | null
+          numero_cartao: string
+          ocorrencias: number
+          rating_final: string
+          score_confianca: number
+          total_compras: number
+          total_gasto: number
+          ultima_compra: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_trusted?: boolean
+          loja_id?: string | null
+          numero_cartao: string
+          ocorrencias?: number
+          rating_final?: string
+          score_confianca?: number
+          total_compras?: number
+          total_gasto?: number
+          ultima_compra?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_trusted?: boolean
+          loja_id?: string | null
+          numero_cartao?: string
+          ocorrencias?: number
+          rating_final?: string
+          score_confianca?: number
+          total_compras?: number
+          total_gasto?: number
+          ultima_compra?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lojas: {
+        Row: {
+          created_at: string
+          endereco: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      ocorrencias: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_ocorrencia: string
+          descricao: string | null
+          id: string
+          loja_id: string | null
+          numero_cartao: string
+          resolvida: boolean
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_ocorrencia?: string
+          descricao?: string | null
+          id?: string
+          loja_id?: string | null
+          numero_cartao: string
+          resolvida?: boolean
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_ocorrencia?: string
+          descricao?: string | null
+          id?: string
+          loja_id?: string | null
+          numero_cartao?: string
+          resolvida?: boolean
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      processamentos: {
+        Row: {
+          arquivo_diaria: string | null
+          arquivo_historico: string | null
+          clientes_red: number | null
+          clientes_trusted: number | null
+          created_at: string
+          created_by: string | null
+          data_referencia: string
+          erro_mensagem: string | null
+          faturamento_total: number | null
+          id: string
+          loja_id: string | null
+          status: string
+          threshold_diamond: number | null
+          threshold_gold: number | null
+          total_transacoes: number | null
+          updated_at: string
+        }
+        Insert: {
+          arquivo_diaria?: string | null
+          arquivo_historico?: string | null
+          clientes_red?: number | null
+          clientes_trusted?: number | null
+          created_at?: string
+          created_by?: string | null
+          data_referencia?: string
+          erro_mensagem?: string | null
+          faturamento_total?: number | null
+          id?: string
+          loja_id?: string | null
+          status?: string
+          threshold_diamond?: number | null
+          threshold_gold?: number | null
+          total_transacoes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          arquivo_diaria?: string | null
+          arquivo_historico?: string | null
+          clientes_red?: number | null
+          clientes_trusted?: number | null
+          created_at?: string
+          created_by?: string | null
+          data_referencia?: string
+          erro_mensagem?: string | null
+          faturamento_total?: number | null
+          id?: string
+          loja_id?: string | null
+          status?: string
+          threshold_diamond?: number | null
+          threshold_gold?: number | null
+          total_transacoes?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "processamentos_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          loja_id: string | null
+          nome: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          loja_id?: string | null
+          nome?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          loja_id?: string | null
+          nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rating_logs: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          id: string
+          motivo: string | null
+          rating_anterior: string | null
+          rating_novo: string | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          rating_anterior?: string | null
+          rating_novo?: string | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          rating_anterior?: string | null
+          rating_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rating_logs_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transacoes: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          data_transacao: string
+          id: string
+          loja_id: string | null
+          numero_cartao: string | null
+          status: string | null
+          valor: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          data_transacao?: string
+          id?: string
+          loja_id?: string | null
+          numero_cartao?: string | null
+          status?: string | null
+          valor?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          data_transacao?: string
+          id?: string
+          loja_id?: string | null
+          numero_cartao?: string | null
+          status?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transacoes_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
