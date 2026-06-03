@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { processarArquivos } from "@/lib/honestguard.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UploadCloud, FileSpreadsheet, Loader2 } from "lucide-react";
+import { UploadCloud, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -19,20 +21,30 @@ const statusClr: Record<string, string> = {
   erro: "bg-destructive/20 text-destructive",
 };
 
+type Summary = {
+  totalTransacoes: number; totalClientes: number;
+  diamond: number; gold: number; silver: number; red: number; trusted: number;
+  alertas: number; faturamento: number;
+};
+
 function UploadsPage() {
   const qc = useQueryClient();
+  const processar = useServerFn(processarArquivos);
   const [diaria, setDiaria] = useState<File | null>(null);
   const [historico, setHistorico] = useState<File | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [phase, setPhase] = useState<"idle" | "uploading" | "processing" | "done" | "error">("idle");
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [errMsg, setErrMsg] = useState<string>("");
 
   const { data: history = [] } = useQuery({
     queryKey: ["upload-history"],
     queryFn: async () => (await supabase.from("processamentos").select("*").order("created_at", { ascending: false }).limit(20)).data ?? [],
+    refetchInterval: phase === "processing" ? 2000 : false,
   });
 
-  const processar = async () => {
+  const run = async () => {
     if (!diaria || !historico) { toast.error("Envie os dois arquivos"); return; }
-    setSubmitting(true);
+    setPhase("uploading"); setSummary(null); setErrMsg("");
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const ts = Date.now();
@@ -44,58 +56,101 @@ function UploadsPage() {
       ]);
       if (u1.error) throw u1.error;
       if (u2.error) throw u2.error;
-      const { error } = await supabase.from("processamentos").insert({
-        arquivo_diaria: diariaPath,
-        arquivo_historico: histPath,
-        status: "aguardando",
-        created_by: user?.id,
-      });
+
+      const { data: proc, error } = await supabase.from("processamentos").insert({
+        arquivo_diaria: diariaPath, arquivo_historico: histPath,
+        status: "aguardando", created_by: user?.id,
+      }).select("id").single();
       if (error) throw error;
-      toast.success("Arquivos enviados! Aguardando processamento da engine.");
+
+      setPhase("processing");
+      qc.invalidateQueries({ queryKey: ["upload-history"] });
+      const res = await processar({ data: { processamentoId: proc.id, arquivoDiaria: diariaPath, arquivoHistorico: histPath } });
+      setSummary(res);
+      setPhase("done");
+      toast.success("Processamento concluído!");
       setDiaria(null); setHistorico(null);
       qc.invalidateQueries({ queryKey: ["upload-history"] });
     } catch (e: any) {
-      toast.error(e.message ?? "Erro ao enviar");
-    } finally {
-      setSubmitting(false);
+      setErrMsg(e.message ?? "Erro desconhecido");
+      setPhase("error");
+      toast.error(e.message ?? "Erro ao processar");
     }
   };
 
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold">Upload de Arquivos</h1>
-        <p className="text-sm text-muted-foreground">Envie as planilhas para processamento pela engine Python</p>
+        <h1 className="text-2xl font-bold">Processamento</h1>
+        <p className="text-sm text-muted-foreground">Envie as planilhas para execução da engine HonestGuard</p>
       </div>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Novo Processamento</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <FileSlot label="BASE_DIARIA.xlsx" file={diaria} setFile={setDiaria} />
-          <FileSlot label="BASE_CLIENTES_HISTORICO.xlsx" file={historico} setFile={setHistorico} />
-          <Button onClick={processar} disabled={submitting || !diaria || !historico} size="lg" className="w-full">
-            {submitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Enviando...</> : <><UploadCloud className="h-4 w-4 mr-2" />PROCESSAR ARQUIVOS</>}
+          <FileSlot label="Arquivo Diário (BASE_DIARIA.xlsx)" file={diaria} setFile={setDiaria} />
+          <FileSlot label="Arquivo Histórico (BASE_CLIENTES_HISTORICO.xlsx)" file={historico} setFile={setHistorico} />
+
+          <Button onClick={run} disabled={phase === "uploading" || phase === "processing" || !diaria || !historico} size="lg" className="w-full">
+            {phase === "uploading" && <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Enviando arquivos...</>}
+            {phase === "processing" && <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando engine HonestGuard...</>}
+            {(phase === "idle" || phase === "done" || phase === "error") && <><UploadCloud className="h-4 w-4 mr-2" />PROCESSAR ARQUIVOS</>}
           </Button>
+
+          {phase === "error" && (
+            <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" /><span>{errMsg}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
+      {summary && (
+        <Card className="border-[var(--rating-trusted)]/40">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-[var(--rating-trusted)]" />Resumo do Processamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Stat label="Transações" value={summary.totalTransacoes} />
+              <Stat label="Clientes" value={summary.totalClientes} />
+              <Stat label="Faturamento" value={summary.faturamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+              <Stat label="Alertas" value={summary.alertas} accent="destructive" />
+              <Stat label="DIAMOND" value={summary.diamond} accent="diamond" />
+              <Stat label="GOLD" value={summary.gold} accent="gold" />
+              <Stat label="SILVER" value={summary.silver} accent="silver" />
+              <Stat label="RED" value={summary.red} accent="red" />
+              <Stat label="TRUSTED" value={summary.trusted} accent="trusted" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
-        <CardHeader><CardTitle className="text-base">Histórico de Uploads</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">Histórico de Processamentos</CardTitle></CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground border-b bg-muted/30">
-              <tr><th className="px-4 py-3">Data</th><th>Diária</th><th>Histórico</th><th>Status</th></tr>
+              <tr><th className="px-4 py-3">Data</th><th>Transações</th><th>RED</th><th>TRUSTED</th><th>Status</th></tr>
             </thead>
             <tbody>
               {history.map((p) => (
                 <tr key={p.id} className="border-b border-border/50">
                   <td className="px-4 py-3 text-xs">{new Date(p.created_at).toLocaleString("pt-BR")}</td>
-                  <td className="font-mono text-xs text-muted-foreground truncate max-w-[200px]">{p.arquivo_diaria ?? "—"}</td>
-                  <td className="font-mono text-xs text-muted-foreground truncate max-w-[200px]">{p.arquivo_historico ?? "—"}</td>
-                  <td><span className={cn("text-xs font-semibold uppercase px-2 py-1 rounded", statusClr[p.status] ?? "bg-muted")}>{p.status}</span></td>
+                  <td>{p.total_transacoes ?? 0}</td>
+                  <td>{p.clientes_red ?? 0}</td>
+                  <td>{p.clientes_trusted ?? 0}</td>
+                  <td>
+                    <span className={cn("text-xs font-semibold uppercase px-2 py-1 rounded inline-flex items-center gap-1", statusClr[p.status] ?? "bg-muted")}>
+                      {p.status === "processando" && <Loader2 className="h-3 w-3 animate-spin" />}
+                      {p.status}
+                    </span>
+                  </td>
                 </tr>
               ))}
-              {!history.length && <tr><td colSpan={4} className="text-center py-8 text-muted-foreground">Nenhum upload realizado</td></tr>}
+              {!history.length && <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum processamento</td></tr>}
             </tbody>
           </table>
         </CardContent>
@@ -113,6 +168,24 @@ function FileSlot({ label, file, setFile }: { label: string; file: File | null; 
         <Input type="file" accept=".xlsx,.xls" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="border-0 p-0 h-auto bg-transparent" />
         {file && <span className="text-xs text-muted-foreground shrink-0">{(file.size / 1024).toFixed(1)} KB</span>}
       </div>
+    </div>
+  );
+}
+
+const accentClr: Record<string, string> = {
+  diamond: "text-[var(--rating-diamond)]",
+  gold: "text-[var(--rating-gold)]",
+  silver: "text-[var(--rating-silver)]",
+  red: "text-[var(--rating-red)]",
+  trusted: "text-[var(--rating-trusted)]",
+  destructive: "text-destructive",
+};
+
+function Stat({ label, value, accent }: { label: string; value: any; accent?: string }) {
+  return (
+    <div className="rounded-lg border bg-card p-3">
+      <div className="text-xs uppercase text-muted-foreground tracking-wide">{label}</div>
+      <div className={cn("text-xl font-bold mt-1", accent && accentClr[accent])}>{value}</div>
     </div>
   );
 }
