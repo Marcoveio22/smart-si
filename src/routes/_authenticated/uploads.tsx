@@ -31,6 +31,14 @@ type Summary = {
 function UploadsPage() {
   const qc = useQueryClient();
   const processar = useServerFn(processarArquivos);
+  const getUrl = useServerFn(getConsolidadoUrl);
+
+  const baixarConsolidado = async (path: string) => {
+    try {
+      const { url } = await getUrl({ data: { path } });
+      window.open(url, "_blank");
+    } catch (e: any) { toast.error(e.message ?? "Erro ao gerar link"); }
+  };
   const [diaria, setDiaria] = useState<File | null>(null);
   const [historico, setHistorico] = useState<File | null>(null);
   const [phase, setPhase] = useState<"idle" | "uploading" | "processing" | "done" | "error">("idle");
