@@ -81,8 +81,8 @@ function UploadsPage() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold">Processamento</h1>
-        <p className="text-sm text-muted-foreground">Envie as planilhas para execução da engine HonestGuard</p>
+        <h1 className="text-2xl font-bold">Processamento Diário</h1>
+        <p className="text-sm text-muted-foreground">Envie as planilhas Base Diária e Base Histórica para execução da engine HonestGuard</p>
       </div>
 
       <Card>

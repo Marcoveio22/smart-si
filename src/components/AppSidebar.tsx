@@ -12,7 +12,7 @@ const items = [
   { title: "Alertas", url: "/alertas", icon: Bell },
   { title: "Ocorrências", url: "/ocorrencias", icon: FileWarning },
   { title: "Processamentos", url: "/processamentos", icon: Cpu },
-  { title: "Upload de Arquivos", url: "/uploads", icon: UploadCloud },
+  { title: "Processamento Diário", url: "/uploads", icon: UploadCloud },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
