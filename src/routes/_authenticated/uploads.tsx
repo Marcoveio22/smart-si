@@ -3,12 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { processarArquivos } from "@/lib/honestguard.functions";
+import { processarArquivos, getConsolidadoUrl } from "@/lib/honestguard.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UploadCloud, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { UploadCloud, FileSpreadsheet, Loader2, CheckCircle2, AlertCircle, Download } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -25,11 +25,20 @@ type Summary = {
   totalTransacoes: number; totalClientes: number;
   diamond: number; gold: number; silver: number; red: number; trusted: number;
   alertas: number; faturamento: number;
+  consolidadoNome?: string; consolidadoPath?: string;
 };
 
 function UploadsPage() {
   const qc = useQueryClient();
   const processar = useServerFn(processarArquivos);
+  const getUrl = useServerFn(getConsolidadoUrl);
+
+  const baixarConsolidado = async (path: string) => {
+    try {
+      const { url } = await getUrl({ data: { path } });
+      window.open(url, "_blank");
+    } catch (e: any) { toast.error(e.message ?? "Erro ao gerar link"); }
+  };
   const [diaria, setDiaria] = useState<File | null>(null);
   const [historico, setHistorico] = useState<File | null>(null);
   const [phase, setPhase] = useState<"idle" | "uploading" | "processing" | "done" | "error">("idle");
@@ -124,6 +133,11 @@ function UploadsPage() {
               <Stat label="RED" value={summary.red} accent="red" />
               <Stat label="TRUSTED" value={summary.trusted} accent="trusted" />
             </div>
+            {summary.consolidadoPath && (
+              <Button onClick={() => baixarConsolidado(summary.consolidadoPath!)} size="lg" className="w-full mt-4">
+                <Download className="h-4 w-4 mr-2" />Baixar Excel Consolidado
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -133,7 +147,7 @@ function UploadsPage() {
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground border-b bg-muted/30">
-              <tr><th className="px-4 py-3">Data</th><th>Transações</th><th>RED</th><th>TRUSTED</th><th>Status</th></tr>
+              <tr><th className="px-4 py-3">Data</th><th>Transações</th><th>RED</th><th>TRUSTED</th><th>Status</th><th>Arquivo</th></tr>
             </thead>
             <tbody>
               {history.map((p) => (
@@ -148,9 +162,16 @@ function UploadsPage() {
                       {p.status}
                     </span>
                   </td>
+                  <td className="pr-4">
+                    {p.arquivo_consolidado_path ? (
+                      <Button size="sm" variant="ghost" onClick={() => baixarConsolidado(p.arquivo_consolidado_path!)}>
+                        <Download className="h-3 w-3 mr-1" />Baixar
+                      </Button>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </td>
                 </tr>
               ))}
-              {!history.length && <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum processamento</td></tr>}
+              {!history.length && <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum processamento</td></tr>}
             </tbody>
           </table>
         </CardContent>
