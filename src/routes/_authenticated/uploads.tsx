@@ -164,7 +164,7 @@ function UploadsPage() {
                   </td>
                   <td className="pr-4">
                     {p.arquivo_consolidado_path ? (
-                      <Button size="sm" variant="ghost" onClick={() => baixarConsolidado(p.arquivo_consolidado_path)}>
+                      <Button size="sm" variant="ghost" onClick={() => baixarConsolidado(p.arquivo_consolidado_path!)}>
                         <Download className="h-3 w-3 mr-1" />Baixar
                       </Button>
                     ) : <span className="text-xs text-muted-foreground">—</span>}
