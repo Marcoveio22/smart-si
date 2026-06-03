@@ -147,7 +147,7 @@ function UploadsPage() {
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-xs uppercase text-muted-foreground border-b bg-muted/30">
-              <tr><th className="px-4 py-3">Data</th><th>Transações</th><th>RED</th><th>TRUSTED</th><th>Status</th></tr>
+              <tr><th className="px-4 py-3">Data</th><th>Transações</th><th>RED</th><th>TRUSTED</th><th>Status</th><th>Arquivo</th></tr>
             </thead>
             <tbody>
               {history.map((p) => (
@@ -162,9 +162,16 @@ function UploadsPage() {
                       {p.status}
                     </span>
                   </td>
+                  <td className="pr-4">
+                    {p.arquivo_consolidado_path ? (
+                      <Button size="sm" variant="ghost" onClick={() => baixarConsolidado(p.arquivo_consolidado_path)}>
+                        <Download className="h-3 w-3 mr-1" />Baixar
+                      </Button>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </td>
                 </tr>
               ))}
-              {!history.length && <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum processamento</td></tr>}
+              {!history.length && <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum processamento</td></tr>}
             </tbody>
           </table>
         </CardContent>
