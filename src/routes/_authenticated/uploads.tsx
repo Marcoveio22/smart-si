@@ -25,6 +25,7 @@ type Summary = {
   totalTransacoes: number; totalClientes: number;
   diamond: number; gold: number; silver: number; red: number; trusted: number;
   alertas: number; faturamento: number;
+  consolidadoNome?: string; consolidadoPath?: string;
 };
 
 function UploadsPage() {
