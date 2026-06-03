@@ -97,19 +97,19 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const wbD = XLSX.read(diariaBuf, { type: "array", cellDates: true });
       const wbH = XLSX.read(histBuf, { type: "array", cellDates: true });
 
-      const diaria: Row[] = XLSX.utils.sheet_to_json(wbD.Sheets[wbD.SheetNames[0]]);
-      const historico: Row[] = XLSX.utils.sheet_to_json(wbH.Sheets[wbH.SheetNames[0]]);
+      const diaria: Row[] = readSheetSmart(wbD.Sheets[wbD.SheetNames[0]]);
+      const historico: Row[] = readSheetSmart(wbH.Sheets[wbH.SheetNames[0]]);
 
       const { data: lojas } = await supabaseAdmin.from("lojas").select("id").limit(1);
       const defaultLoja = lojas?.[0]?.id ?? null;
 
       const transacoes = diaria.map((r) => ({
-        numero_cartao: String(pick(r, ["numero_cartao", "cartao", "card"]) ?? "").trim(),
-        valor: toNum(pick(r, ["valor", "value", "amount"])),
-        data_transacao: toDate(pick(r, ["data_transacao", "data", "date"])).toISOString(),
-        status: String(pick(r, ["status"]) ?? "aprovada"),
+        numero_cartao: String(pick(r, ["numero_cartao", "número do cartão", "numero do cartao", "cartão", "cartao", "card"]) ?? "").trim(),
+        valor: toNum(pick(r, ["valor", "valor (r$)", "valor (r\\$)", "value", "amount"])),
+        data_transacao: toDate(pick(r, ["data_transacao", "data/hora", "data", "date"])).toISOString(),
+        status: String(pick(r, ["estado", "status"]) ?? "aprovada"),
         _orig: r,
-      })).filter((t) => t.numero_cartao);
+      })).filter((t) => t.numero_cartao && t.valor > 0);
 
       const agg = new Map<string, { total: number; count: number; ultima: Date; valores: number[] }>();
       for (const t of transacoes) {
