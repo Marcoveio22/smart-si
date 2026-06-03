@@ -133,6 +133,11 @@ function UploadsPage() {
               <Stat label="RED" value={summary.red} accent="red" />
               <Stat label="TRUSTED" value={summary.trusted} accent="trusted" />
             </div>
+            {summary.consolidadoPath && (
+              <Button onClick={() => baixarConsolidado(summary.consolidadoPath!)} size="lg" className="w-full mt-4">
+                <Download className="h-4 w-4 mr-2" />Baixar Excel Consolidado
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
