@@ -29,8 +29,38 @@ function toDate(v: any): Date {
     const utc = (v - 25569) * 86400 * 1000;
     return new Date(utc);
   }
-  const d = new Date(v);
+  const s = String(v).trim();
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (m) {
+    const [, dd, mm, yy, h = "0", mi = "0", ss = "0"] = m;
+    const year = yy.length === 2 ? 2000 + parseInt(yy) : parseInt(yy);
+    return new Date(year, parseInt(mm) - 1, parseInt(dd), parseInt(h), parseInt(mi), parseInt(ss));
+  }
+  const d = new Date(s);
   return isNaN(d.getTime()) ? new Date() : d;
+}
+
+// VMmarket/Linx exports have ~14 lines of metadata before the real headers.
+// Auto-detect the header row by scanning for a known column name.
+function readSheetSmart(sheet: XLSX.WorkSheet): Row[] {
+  const matrix: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: null }) as any;
+  const needles = ["data/hora", "número do cartão", "numero do cartao", "valor (r$)", "valor", "numero_cartao", "cartao", "cartão"];
+  let headerIdx = 0;
+  for (let i = 0; i < Math.min(matrix.length, 30); i++) {
+    const row = matrix[i] ?? [];
+    const norm = row.map((c) => String(c ?? "").toLowerCase().trim());
+    if (needles.some((n) => norm.includes(n))) { headerIdx = i; break; }
+  }
+  const headers = (matrix[headerIdx] ?? []).map((h: any) => String(h ?? "").trim());
+  const out: Row[] = [];
+  for (let i = headerIdx + 1; i < matrix.length; i++) {
+    const r = matrix[i] ?? [];
+    if (r.every((c) => c == null || c === "")) continue;
+    const obj: Row = {};
+    headers.forEach((h, j) => { if (h) obj[h] = r[j]; });
+    out.push(obj);
+  }
+  return out;
 }
 
 function percentile(sorted: number[], p: number): number {
