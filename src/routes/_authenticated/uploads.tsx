@@ -25,8 +25,10 @@ type Summary = {
   totalTransacoes: number; totalClientes: number;
   diamond: number; gold: number; silver: number; red: number; trusted: number;
   alertas: number; faturamento: number;
+  linhasLidas?: number; linhasProcessadas?: number; linhasExportadas?: number;
   consolidadoNome?: string; consolidadoPath?: string;
 };
+
 
 function UploadsPage() {
   const qc = useQueryClient();
@@ -122,6 +124,13 @@ function UploadsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {(summary.linhasLidas != null) && (
+              <div className="mb-3 p-3 rounded-md bg-muted/40 text-xs font-mono grid grid-cols-3 gap-2">
+                <span>Linhas lidas: <b>{summary.linhasLidas}</b></span>
+                <span>Processadas: <b>{summary.linhasProcessadas}</b></span>
+                <span>Exportadas: <b>{summary.linhasExportadas}</b></span>
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Stat label="Transações" value={summary.totalTransacoes} />
               <Stat label="Clientes" value={summary.totalClientes} />
@@ -133,6 +142,7 @@ function UploadsPage() {
               <Stat label="RED" value={summary.red} accent="red" />
               <Stat label="TRUSTED" value={summary.trusted} accent="trusted" />
             </div>
+
             {summary.consolidadoPath && (
               <Button onClick={() => baixarConsolidado(summary.consolidadoPath!)} size="lg" className="w-full mt-4">
                 <Download className="h-4 w-4 mr-2" />Baixar Excel Consolidado

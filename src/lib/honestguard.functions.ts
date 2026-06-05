@@ -71,6 +71,21 @@ function percentile(sorted: number[], p: number): number {
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
 
+const PIX_TOKEN = "PIX";
+function normalizeCartao(v: any): string {
+  if (v == null) return PIX_TOKEN;
+  const s = String(v).trim();
+  if (!s) return PIX_TOKEN;
+  const up = s.toUpperCase();
+  if (["NAN", "NULL", "N/A", "NONE", "-", "#N/A", "NA"].includes(up)) return PIX_TOKEN;
+  return s;
+}
+
+function fmtDataHora(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
 export const processarArquivos = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({
@@ -100,31 +115,46 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const diaria: Row[] = readSheetSmart(wbD.Sheets[wbD.SheetNames[0]]);
       const historico: Row[] = readSheetSmart(wbH.Sheets[wbH.SheetNames[0]]);
 
+      const linhasLidas = diaria.length;
+
       const { data: lojas } = await supabaseAdmin.from("lojas").select("id").limit(1);
       const defaultLoja = lojas?.[0]?.id ?? null;
 
-      const transacoes = diaria.map((r) => ({
-        numero_cartao: String(pick(r, ["numero_cartao", "número do cartão", "numero do cartao", "cartão", "cartao", "card"]) ?? "").trim(),
-        valor: toNum(pick(r, ["valor", "valor (r$)", "valor (r\\$)", "value", "amount"])),
-        data_transacao: toDate(pick(r, ["data_transacao", "data/hora", "data", "date"])).toISOString(),
-        status: String(pick(r, ["estado", "status"]) ?? "aprovada"),
-        _orig: r,
-      })).filter((t) => t.numero_cartao && t.valor > 0);
+      type Tx = {
+        numero_cartao: string; isPix: boolean; valor: number; data_transacao: Date;
+        status: string; produto: string; tipo: string; _orig: Row;
+      };
+      const transacoes: Tx[] = diaria.map((r) => {
+        const rawCartao = pick(r, ["numero_cartao", "número do cartão", "numero do cartao", "cartão", "cartao", "card"]);
+        const numero_cartao = normalizeCartao(rawCartao);
+        return {
+          numero_cartao,
+          isPix: numero_cartao === PIX_TOKEN,
+          valor: toNum(pick(r, ["valor", "valor (r$)", "valor (r\\$)", "value", "amount"])),
+          data_transacao: toDate(pick(r, ["data_transacao", "data/hora", "data", "date"])),
+          status: String(pick(r, ["estado", "status"]) ?? "aprovada"),
+          produto: String(pick(r, ["produto", "descrição", "descricao", "item", "product"]) ?? ""),
+          tipo: String(pick(r, ["tipo", "tipo de pagamento", "forma de pagamento", "tipo pagamento", "payment"]) ?? ""),
+          _orig: r,
+        };
+      });
+
+      const linhasProcessadas = transacoes.length;
 
       const agg = new Map<string, { total: number; count: number; ultima: Date; valores: number[] }>();
       for (const t of transacoes) {
+        if (t.isPix) continue;
         const cur = agg.get(t.numero_cartao) ?? { total: 0, count: 0, ultima: new Date(0), valores: [] };
         cur.total += t.valor;
         cur.count += 1;
-        const d = new Date(t.data_transacao);
-        if (d > cur.ultima) cur.ultima = d;
+        if (t.data_transacao > cur.ultima) cur.ultima = t.data_transacao;
         cur.valores.push(t.valor);
         agg.set(t.numero_cartao, cur);
       }
 
       const histMap = new Map<string, Row>();
       for (const h of historico) {
-        const k = String(pick(h, ["numero_cartao", "cartao"]) ?? "").trim();
+        const k = String(pick(h, ["numero_cartao", "cartao", "número do cartão", "numero do cartao"]) ?? "").trim();
         if (k) histMap.set(k, h);
       }
 
@@ -139,7 +169,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const p90 = percentile(totals, 90);
 
       const txRows = transacoes.map((t) => ({
-        numero_cartao: t.numero_cartao, valor: t.valor, data_transacao: t.data_transacao,
+        numero_cartao: t.numero_cartao, valor: t.valor, data_transacao: t.data_transacao.toISOString(),
         status: t.status, loja_id: defaultLoja,
       }));
       for (let i = 0; i < txRows.length; i += 500) {
@@ -150,6 +180,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const alertas: any[] = [];
       const clientesClassif: any[] = [];
       const ratingByCartao = new Map<string, { rating: string; score: number; trusted: boolean; ocorrencias: number; totalGasto: number; totalCompras: number }>();
+      ratingByCartao.set(PIX_TOKEN, { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0 });
 
       for (const [cartao, v] of agg) {
         const h = histMap.get(cartao);
@@ -230,48 +261,56 @@ export const processarArquivos = createServerFn({ method: "POST" })
 
       const faturamento = transacoes.reduce((s, t) => s + t.valor, 0);
 
-      // === GERAR EXCEL CONSOLIDADO ===
+      // === BASE_DIARIA_ENRIQUECIDA — preserva TODAS as linhas (PIX incluído) ===
       const baseDiariaEnriq = transacoes.map((t) => {
-        const r = ratingByCartao.get(t.numero_cartao);
+        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0 };
+        const h = !t.isPix ? histMap.get(t.numero_cartao) : null;
         return {
-          ...t._orig,
-          numero_cartao: t.numero_cartao,
-          valor: t.valor,
-          data_transacao: t.data_transacao,
-          rating: r?.rating ?? "SILVER",
-          score_confianca: r ? Number(r.score.toFixed(2)) : 0,
-          trusted: r?.trusted ? "SIM" : "NÃO",
+          "Data/Hora": fmtDataHora(t.data_transacao),
+          "Produto": t.produto,
+          "Número do Cartão": t.numero_cartao,
+          "Tipo Pagamento": t.tipo,
+          "Valor": t.valor,
+          "Rating Sugerido": r.rating,
+          "Rating Final": r.rating,
+          "TRUSTED": r.trusted ? "SIM" : "NÃO",
+          "Score de Confiança": Number(r.score.toFixed(2)),
+          "Alertas": r.rating === "RED" ? "RED" : (r.ocorrencias >= 3 ? "OCORRENCIAS" : ""),
+          "Histórico": h ? "SIM" : "NÃO",
         };
       });
 
+      const linhasExportadas = baseDiariaEnriq.length;
+
       const alertasSheet = alertas.map((a) => ({
-        numero_cartao: a._cartao, tipo: a.tipo, gravidade: a.gravidade, descricao: a.descricao,
+        "Número do Cartão": a._cartao, "Tipo": a.tipo, "Gravidade": a.gravidade, "Descrição": a.descricao,
       }));
 
-      const monitoramento = [
-        { metrica: "Total de Transações", valor: transacoes.length },
-        { metrica: "Total de Clientes", valor: agg.size },
-        { metrica: "Faturamento Total", valor: faturamento },
-        { metrica: "Threshold GOLD (P75)", valor: Number(p75.toFixed(2)) },
-        { metrica: "Threshold DIAMOND (P90)", valor: Number(p90.toFixed(2)) },
-        { metrica: "Clientes DIAMOND", valor: cDia },
-        { metrica: "Clientes GOLD", valor: cGold },
-        { metrica: "Clientes SILVER", valor: cSil },
-        { metrica: "Clientes RED", valor: cRed },
-        { metrica: "Clientes TRUSTED", valor: cTrust },
-        { metrica: "Total de Alertas", valor: alertas.length },
-        { metrica: "Gerado em", valor: new Date().toISOString() },
+      // === MONITORAMENTO — agrupa compras (mesmo data/hora + cartão), 3 linhas em branco entre grupos ===
+      const monitoramentoAOA: any[][] = [
+        ["Data/Hora", "Produto", "Tipo", "Rating Final", "TRUSTED"],
       ];
+      let lastKey: string | null = null;
+      for (const t of transacoes) {
+        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", trusted: false } as any;
+        const dh = fmtDataHora(t.data_transacao);
+        const key = `${dh}|${t.numero_cartao}`;
+        if (lastKey !== null && key !== lastKey) {
+          monitoramentoAOA.push(["", "", "", "", ""], ["", "", "", "", ""], ["", "", "", "", ""]);
+        }
+        monitoramentoAOA.push([dh, t.produto, t.tipo, r.rating, r.trusted ? "SIM" : "NÃO"]);
+        lastKey = key;
+      }
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(baseDiariaEnriq), "Base Diaria Enriquecida");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(alertasSheet.length ? alertasSheet : [{ info: "Nenhum alerta" }]), "Alertas");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monitoramento), "Monitoramento");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientesClassif), "Clientes Classificados");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(baseDiariaEnriq), "BASE_DIARIA_ENRIQUECIDA");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(alertasSheet.length ? alertasSheet : [{ info: "Nenhum alerta" }]), "ALERTAS");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monitoramentoAOA), "MONITORAMENTO");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientesClassif.length ? clientesClassif : [{ info: "Sem clientes identificados" }]), "CLIENTES_CLASSIFICADOS");
 
       const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const consolidadoNome = `CONSOLIDADO_${stamp}.xlsx`;
+      const consolidadoNome = `HONESTGUARD_RESULTADO_${stamp}.xlsx`;
       const consolidadoPath = `${data.processamentoId}/${consolidadoNome}`;
       const up = await supabaseAdmin.storage.from("excel-uploads").upload(consolidadoPath, buf, {
         contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -299,6 +338,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
         diamond: cDia, gold: cGold, silver: cSil, red: cRed, trusted: cTrust,
         alertas: alertas.length,
         faturamento, p75, p90,
+        linhasLidas, linhasProcessadas, linhasExportadas,
         consolidadoNome, consolidadoPath,
       };
     } catch (e: any) {
@@ -319,3 +359,4 @@ export const getConsolidadoUrl = createServerFn({ method: "POST" })
     if (error) throw error;
     return { url: signed.signedUrl };
   });
+
