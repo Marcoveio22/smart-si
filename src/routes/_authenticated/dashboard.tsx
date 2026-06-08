@@ -52,10 +52,18 @@ function Dashboard() {
     },
   });
 
-  const clientes = data?.clientes ?? [];
-  const byRating = clientes.reduce<Record<string, number>>((a, c) => { a[c.rating_final] = (a[c.rating_final] ?? 0) + 1; return a; }, {});
+  const allClientes = data?.clientes ?? [];
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const clientes = statusFilter === "all"
+    ? allClientes
+    : allClientes.filter((c: any) => (c.status_manual ?? "NEUTRO") === statusFilter);
+
+  const byRating = clientes.reduce<Record<string, number>>((a: any, c: any) => { a[c.rating_final] = (a[c.rating_final] ?? 0) + 1; return a; }, {});
+  const byStatusManual = allClientes.reduce<Record<string, number>>((a: any, c: any) => {
+    const s = c.status_manual ?? "NEUTRO"; a[s] = (a[s] ?? 0) + 1; return a;
+  }, {});
   const faturamento = (data?.transacoes ?? []).reduce((s, t) => s + Number(t.valor), 0);
-  const top10 = [...clientes].sort((a, b) => Number(b.total_gasto) - Number(a.total_gasto)).slice(0, 10);
+  const top10 = [...clientes].sort((a: any, b: any) => Number(b.total_gasto) - Number(a.total_gasto)).slice(0, 10);
 
   const pieData = ["DIAMOND", "GOLD", "SILVER", "RED", "TRUSTED"].map((r) => ({ name: r, value: byRating[r] ?? 0 }));
   const fatPorMes = aggregateByMonth(data?.transacoes ?? []);
@@ -63,14 +71,29 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Visão geral da operação e inteligência de monitoramento</p>
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Visão geral da operação e inteligência de monitoramento</p>
+        </div>
+        <div className="w-56">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger><SelectValue placeholder="Filtrar por Status Manual" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="TRUSTED">🟢 Apenas TRUSTED</SelectItem>
+              <SelectItem value="NEUTRO">⚪ Apenas NEUTRO</SelectItem>
+              <SelectItem value="RED_FLAG">🔴 Apenas RED FLAG</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <StatCard icon={Users} label="Total de Clientes" value={clientes.length} />
-        <StatCard icon={ShieldCheck} label="TRUSTED" value={clientes.filter((c) => c.is_trusted).length} accent="var(--rating-trusted)" />
+        <StatCard icon={ShieldCheck} label="Status: TRUSTED" value={byStatusManual.TRUSTED ?? 0} accent="var(--rating-trusted)" />
+        <StatCard icon={Circle} label="Status: NEUTRO" value={byStatusManual.NEUTRO ?? 0} />
+        <StatCard icon={Flag} label="Status: RED FLAG" value={byStatusManual.RED_FLAG ?? 0} accent="var(--rating-red)" />
         <StatCard icon={Gem} label="DIAMOND" value={byRating.DIAMOND ?? 0} accent="var(--rating-diamond)" />
         <StatCard icon={Crown} label="GOLD" value={byRating.GOLD ?? 0} accent="var(--rating-gold)" />
         <StatCard icon={Award} label="SILVER" value={byRating.SILVER ?? 0} accent="var(--rating-silver)" />
