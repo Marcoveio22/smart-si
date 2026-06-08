@@ -40,7 +40,7 @@ function Dashboard() {
     queryKey: ["dashboard"],
     queryFn: async () => {
       const [clientes, alertasAtivos, transacoes] = await Promise.all([
-        supabase.from("clientes").select("rating_final, total_gasto, total_compras, is_trusted, numero_cartao"),
+        supabase.from("clientes").select("rating_final, total_gasto, total_compras, is_trusted, numero_cartao, status_manual"),
         supabase.from("alertas").select("id, created_at, gravidade").eq("status", "ativo"),
         supabase.from("transacoes").select("valor, data_transacao"),
       ]);
