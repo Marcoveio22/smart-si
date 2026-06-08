@@ -72,6 +72,10 @@ export type Database = {
           ocorrencias: number
           rating_final: string
           score_confianca: number
+          status_manual: string
+          status_manual_desde: string | null
+          status_manual_observacao: string | null
+          status_manual_por: string | null
           total_compras: number
           total_gasto: number
           ultima_compra: string | null
@@ -86,6 +90,10 @@ export type Database = {
           ocorrencias?: number
           rating_final?: string
           score_confianca?: number
+          status_manual?: string
+          status_manual_desde?: string | null
+          status_manual_observacao?: string | null
+          status_manual_por?: string | null
           total_compras?: number
           total_gasto?: number
           ultima_compra?: string | null
@@ -100,6 +108,10 @@ export type Database = {
           ocorrencias?: number
           rating_final?: string
           score_confianca?: number
+          status_manual?: string
+          status_manual_desde?: string | null
+          status_manual_observacao?: string | null
+          status_manual_por?: string | null
           total_compras?: number
           total_gasto?: number
           ultima_compra?: string | null

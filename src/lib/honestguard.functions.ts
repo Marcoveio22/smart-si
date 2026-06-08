@@ -179,8 +179,8 @@ export const processarArquivos = createServerFn({ method: "POST" })
       let cDia = 0, cGold = 0, cSil = 0, cRed = 0, cTrust = 0;
       const alertas: any[] = [];
       const clientesClassif: any[] = [];
-      const ratingByCartao = new Map<string, { rating: string; score: number; trusted: boolean; ocorrencias: number; totalGasto: number; totalCompras: number }>();
-      ratingByCartao.set(PIX_TOKEN, { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0 });
+      const ratingByCartao = new Map<string, { rating: string; score: number; trusted: boolean; ocorrencias: number; totalGasto: number; totalCompras: number; statusManual: string }>();
+      ratingByCartao.set(PIX_TOKEN, { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0, statusManual: "NEUTRO" });
 
       for (const [cartao, v] of agg) {
         const h = histMap.get(cartao);
@@ -203,14 +203,16 @@ export const processarArquivos = createServerFn({ method: "POST" })
         else if (rating === "SILVER") cSil++;
         else if (rating === "RED") cRed++;
 
-        ratingByCartao.set(cartao, { rating, score, trusted: isTrusted, ocorrencias, totalGasto, totalCompras });
-
         const { data: existing } = await supabaseAdmin
-          .from("clientes").select("id, rating_final").eq("numero_cartao", cartao).maybeSingle();
+          .from("clientes").select("id, rating_final, status_manual").eq("numero_cartao", cartao).maybeSingle();
+
+        const statusManual = ((existing as any)?.status_manual as string | undefined) ?? "NEUTRO";
+        ratingByCartao.set(cartao, { rating, score, trusted: isTrusted, ocorrencias, totalGasto, totalCompras, statusManual });
 
         let clienteId: string;
         if (existing) {
           clienteId = existing.id;
+          // IMPORTANTE: NUNCA sobrescrever status_manual / observação / autor
           await supabaseAdmin.from("clientes").update({
             total_gasto: totalGasto, total_compras: totalCompras, ultima_compra: v.ultima.toISOString(),
             rating_final: rating, score_confianca: score, is_trusted: isTrusted, ocorrencias, loja_id: defaultLoja,
@@ -231,7 +233,8 @@ export const processarArquivos = createServerFn({ method: "POST" })
         }
 
         clientesClassif.push({
-          numero_cartao: cartao, rating, score_confianca: Number(score.toFixed(2)),
+          numero_cartao: cartao, rating, "Status Manual": statusManual,
+          score_confianca: Number(score.toFixed(2)),
           trusted: isTrusted ? "SIM" : "NÃO", total_gasto: totalGasto, total_compras: totalCompras,
           ocorrencias, ultima_compra: v.ultima.toISOString().slice(0, 10),
         });
@@ -240,20 +243,20 @@ export const processarArquivos = createServerFn({ method: "POST" })
           alertas.push({
             cliente_id: clienteId, loja_id: defaultLoja, tipo: "alta_frequencia", gravidade: "alta",
             descricao: `Cliente realizou ${v.count} transações em curto período.`,
-            _cartao: cartao,
+            _cartao: cartao, _status_manual: statusManual,
           });
         }
         if (rating === "RED") {
           alertas.push({
             cliente_id: clienteId, loja_id: defaultLoja, tipo: "comportamento_suspeito", gravidade: "alta",
             descricao: `Cliente classificado como RED (${ocorrencias} ocorrências).`,
-            _cartao: cartao,
+            _cartao: cartao, _status_manual: statusManual,
           });
         }
       }
 
       if (alertas.length) {
-        const toInsert = alertas.map(({ _cartao, ...a }) => a);
+        const toInsert = alertas.map(({ _cartao, _status_manual, ...a }) => a);
         for (let i = 0; i < toInsert.length; i += 500) {
           await supabaseAdmin.from("alertas").insert(toInsert.slice(i, i + 500));
         }
@@ -263,7 +266,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
 
       // === BASE_DIARIA_ENRIQUECIDA — preserva TODAS as linhas (PIX incluído) ===
       const baseDiariaEnriq = transacoes.map((t) => {
-        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0 };
+        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0, statusManual: "NEUTRO" };
         const h = !t.isPix ? histMap.get(t.numero_cartao) : null;
         return {
           "Data/Hora": fmtDataHora(t.data_transacao),
@@ -273,6 +276,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
           "Valor": t.valor,
           "Rating Sugerido": r.rating,
           "Rating Final": r.rating,
+          "Status Manual": r.statusManual ?? "NEUTRO",
           "TRUSTED": r.trusted ? "SIM" : "NÃO",
           "Score de Confiança": Number(r.score.toFixed(2)),
           "Alertas": r.rating === "RED" ? "RED" : (r.ocorrencias >= 3 ? "OCORRENCIAS" : ""),
@@ -283,22 +287,23 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const linhasExportadas = baseDiariaEnriq.length;
 
       const alertasSheet = alertas.map((a) => ({
-        "Número do Cartão": a._cartao, "Tipo": a.tipo, "Gravidade": a.gravidade, "Descrição": a.descricao,
+        "Número do Cartão": a._cartao, "Tipo": a.tipo, "Gravidade": a.gravidade,
+        "Status Manual": a._status_manual ?? "NEUTRO", "Descrição": a.descricao,
       }));
 
       // === MONITORAMENTO — agrupa compras (mesmo data/hora + cartão), 3 linhas em branco entre grupos ===
       const monitoramentoAOA: any[][] = [
-        ["Data/Hora", "Produto", "Tipo", "Rating Final", "TRUSTED"],
+        ["Data/Hora", "Produto", "Tipo", "Rating Final", "Status Manual", "TRUSTED"],
       ];
       let lastKey: string | null = null;
       for (const t of transacoes) {
-        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", trusted: false } as any;
+        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", trusted: false, statusManual: "NEUTRO" } as any;
         const dh = fmtDataHora(t.data_transacao);
         const key = `${dh}|${t.numero_cartao}`;
         if (lastKey !== null && key !== lastKey) {
-          monitoramentoAOA.push(["", "", "", "", ""], ["", "", "", "", ""], ["", "", "", "", ""]);
+          monitoramentoAOA.push(["", "", "", "", "", ""], ["", "", "", "", "", ""], ["", "", "", "", "", ""]);
         }
-        monitoramentoAOA.push([dh, t.produto, t.tipo, r.rating, r.trusted ? "SIM" : "NÃO"]);
+        monitoramentoAOA.push([dh, t.produto, t.tipo, r.rating, r.statusManual ?? "NEUTRO", r.trusted ? "SIM" : "NÃO"]);
         lastKey = key;
       }
 
