@@ -171,19 +171,20 @@ function Dashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase text-muted-foreground border-b">
-                <tr><th className="py-2">#</th><th>Cartão</th><th>Rating</th><th className="text-right">Compras</th><th className="text-right">Gasto</th></tr>
+                <tr><th className="py-2">#</th><th>Cartão</th><th>Rating</th><th>Status Manual</th><th className="text-right">Compras</th><th className="text-right">Gasto</th></tr>
               </thead>
               <tbody>
-                {top10.map((c, i) => (
+                {top10.map((c: any, i: number) => (
                   <tr key={c.numero_cartao} className="border-b border-border/50">
                     <td className="py-2 text-muted-foreground">{i + 1}</td>
                     <td className="font-mono">{c.numero_cartao}</td>
                     <td><RatingBadge rating={c.rating_final} /></td>
+                    <td><StatusManualBadge status={c.status_manual} /></td>
                     <td className="text-right">{c.total_compras}</td>
                     <td className="text-right font-semibold">{Number(c.total_gasto).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
                   </tr>
                 ))}
-                {!top10.length && <tr><td colSpan={5} className="text-center py-8 text-muted-foreground">Sem dados</td></tr>}
+                {!top10.length && <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Sem dados</td></tr>}
               </tbody>
             </table>
           </div>
