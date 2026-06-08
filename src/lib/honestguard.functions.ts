@@ -243,20 +243,20 @@ export const processarArquivos = createServerFn({ method: "POST" })
           alertas.push({
             cliente_id: clienteId, loja_id: defaultLoja, tipo: "alta_frequencia", gravidade: "alta",
             descricao: `Cliente realizou ${v.count} transações em curto período.`,
-            _cartao: cartao,
+            _cartao: cartao, _status_manual: statusManual,
           });
         }
         if (rating === "RED") {
           alertas.push({
             cliente_id: clienteId, loja_id: defaultLoja, tipo: "comportamento_suspeito", gravidade: "alta",
             descricao: `Cliente classificado como RED (${ocorrencias} ocorrências).`,
-            _cartao: cartao,
+            _cartao: cartao, _status_manual: statusManual,
           });
         }
       }
 
       if (alertas.length) {
-        const toInsert = alertas.map(({ _cartao, ...a }) => a);
+        const toInsert = alertas.map(({ _cartao, _status_manual, ...a }) => a);
         for (let i = 0; i < toInsert.length; i += 500) {
           await supabaseAdmin.from("alertas").insert(toInsert.slice(i, i + 500));
         }
@@ -266,7 +266,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
 
       // === BASE_DIARIA_ENRIQUECIDA — preserva TODAS as linhas (PIX incluído) ===
       const baseDiariaEnriq = transacoes.map((t) => {
-        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0 };
+        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0, statusManual: "NEUTRO" };
         const h = !t.isPix ? histMap.get(t.numero_cartao) : null;
         return {
           "Data/Hora": fmtDataHora(t.data_transacao),
@@ -276,6 +276,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
           "Valor": t.valor,
           "Rating Sugerido": r.rating,
           "Rating Final": r.rating,
+          "Status Manual": r.statusManual ?? "NEUTRO",
           "TRUSTED": r.trusted ? "SIM" : "NÃO",
           "Score de Confiança": Number(r.score.toFixed(2)),
           "Alertas": r.rating === "RED" ? "RED" : (r.ocorrencias >= 3 ? "OCORRENCIAS" : ""),
@@ -286,22 +287,23 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const linhasExportadas = baseDiariaEnriq.length;
 
       const alertasSheet = alertas.map((a) => ({
-        "Número do Cartão": a._cartao, "Tipo": a.tipo, "Gravidade": a.gravidade, "Descrição": a.descricao,
+        "Número do Cartão": a._cartao, "Tipo": a.tipo, "Gravidade": a.gravidade,
+        "Status Manual": a._status_manual ?? "NEUTRO", "Descrição": a.descricao,
       }));
 
       // === MONITORAMENTO — agrupa compras (mesmo data/hora + cartão), 3 linhas em branco entre grupos ===
       const monitoramentoAOA: any[][] = [
-        ["Data/Hora", "Produto", "Tipo", "Rating Final", "TRUSTED"],
+        ["Data/Hora", "Produto", "Tipo", "Rating Final", "Status Manual", "TRUSTED"],
       ];
       let lastKey: string | null = null;
       for (const t of transacoes) {
-        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", trusted: false } as any;
+        const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", trusted: false, statusManual: "NEUTRO" } as any;
         const dh = fmtDataHora(t.data_transacao);
         const key = `${dh}|${t.numero_cartao}`;
         if (lastKey !== null && key !== lastKey) {
-          monitoramentoAOA.push(["", "", "", "", ""], ["", "", "", "", ""], ["", "", "", "", ""]);
+          monitoramentoAOA.push(["", "", "", "", "", ""], ["", "", "", "", "", ""], ["", "", "", "", "", ""]);
         }
-        monitoramentoAOA.push([dh, t.produto, t.tipo, r.rating, r.trusted ? "SIM" : "NÃO"]);
+        monitoramentoAOA.push([dh, t.produto, t.tipo, r.rating, r.statusManual ?? "NEUTRO", r.trusted ? "SIM" : "NÃO"]);
         lastKey = key;
       }
 
