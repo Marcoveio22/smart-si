@@ -179,8 +179,8 @@ export const processarArquivos = createServerFn({ method: "POST" })
       let cDia = 0, cGold = 0, cSil = 0, cRed = 0, cTrust = 0;
       const alertas: any[] = [];
       const clientesClassif: any[] = [];
-      const ratingByCartao = new Map<string, { rating: string; score: number; trusted: boolean; ocorrencias: number; totalGasto: number; totalCompras: number }>();
-      ratingByCartao.set(PIX_TOKEN, { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0 });
+      const ratingByCartao = new Map<string, { rating: string; score: number; trusted: boolean; ocorrencias: number; totalGasto: number; totalCompras: number; statusManual: string }>();
+      ratingByCartao.set(PIX_TOKEN, { rating: "SILVER", score: 0, trusted: false, ocorrencias: 0, totalGasto: 0, totalCompras: 0, statusManual: "NEUTRO" });
 
       for (const [cartao, v] of agg) {
         const h = histMap.get(cartao);
@@ -203,14 +203,16 @@ export const processarArquivos = createServerFn({ method: "POST" })
         else if (rating === "SILVER") cSil++;
         else if (rating === "RED") cRed++;
 
-        ratingByCartao.set(cartao, { rating, score, trusted: isTrusted, ocorrencias, totalGasto, totalCompras });
-
         const { data: existing } = await supabaseAdmin
-          .from("clientes").select("id, rating_final").eq("numero_cartao", cartao).maybeSingle();
+          .from("clientes").select("id, rating_final, status_manual").eq("numero_cartao", cartao).maybeSingle();
+
+        const statusManual = ((existing as any)?.status_manual as string | undefined) ?? "NEUTRO";
+        ratingByCartao.set(cartao, { rating, score, trusted: isTrusted, ocorrencias, totalGasto, totalCompras, statusManual });
 
         let clienteId: string;
         if (existing) {
           clienteId = existing.id;
+          // IMPORTANTE: NUNCA sobrescrever status_manual / observação / autor
           await supabaseAdmin.from("clientes").update({
             total_gasto: totalGasto, total_compras: totalCompras, ultima_compra: v.ultima.toISOString(),
             rating_final: rating, score_confianca: score, is_trusted: isTrusted, ocorrencias, loja_id: defaultLoja,
@@ -231,7 +233,8 @@ export const processarArquivos = createServerFn({ method: "POST" })
         }
 
         clientesClassif.push({
-          numero_cartao: cartao, rating, score_confianca: Number(score.toFixed(2)),
+          numero_cartao: cartao, rating, "Status Manual": statusManual,
+          score_confianca: Number(score.toFixed(2)),
           trusted: isTrusted ? "SIM" : "NÃO", total_gasto: totalGasto, total_compras: totalCompras,
           ocorrencias, ultima_compra: v.ultima.toISOString().slice(0, 10),
         });
