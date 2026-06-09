@@ -14,10 +14,26 @@ function pick(row: Row, keys: string[]): any {
   return undefined;
 }
 
+// Normaliza valor monetário pt-BR/US para Number.
+// Regras: "1.250,99" -> 1250.99 | "30,45" -> 30.45 | "30.45" -> 30.45 | 30.45 -> 30.45
 function toNum(v: any): number {
   if (v == null || v === "") return 0;
-  if (typeof v === "number") return v;
-  const s = String(v).replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  let s = String(v).trim();
+  if (!s) return 0;
+  // remove R$, espaços, NBSP e qualquer caractere fora de [0-9 , . -]
+  s = s.replace(/[Rr]\$/g, "").replace(/[\s\u00A0]/g, "").replace(/[^\d,.\-]/g, "");
+  if (!s) return 0;
+  const hasComma = s.includes(",");
+  const hasDot = s.includes(".");
+  if (hasComma && hasDot) {
+    // formato pt-BR: ponto = milhar, vírgula = decimal
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else if (hasComma) {
+    // só vírgula -> decimal pt-BR
+    s = s.replace(",", ".");
+  }
+  // só ponto -> já é decimal (US/ISO), mantém
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
