@@ -14,10 +14,26 @@ function pick(row: Row, keys: string[]): any {
   return undefined;
 }
 
+// Normaliza valor monetário pt-BR/US para Number.
+// Regras: "1.250,99" -> 1250.99 | "30,45" -> 30.45 | "30.45" -> 30.45 | 30.45 -> 30.45
 function toNum(v: any): number {
   if (v == null || v === "") return 0;
-  if (typeof v === "number") return v;
-  const s = String(v).replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  let s = String(v).trim();
+  if (!s) return 0;
+  // remove R$, espaços, NBSP e qualquer caractere fora de [0-9 , . -]
+  s = s.replace(/[Rr]\$/g, "").replace(/[\s\u00A0]/g, "").replace(/[^\d,.\-]/g, "");
+  if (!s) return 0;
+  const hasComma = s.includes(",");
+  const hasDot = s.includes(".");
+  if (hasComma && hasDot) {
+    // formato pt-BR: ponto = milhar, vírgula = decimal
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else if (hasComma) {
+    // só vírgula -> decimal pt-BR
+    s = s.replace(",", ".");
+  }
+  // só ponto -> já é decimal (US/ISO), mantém
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
@@ -307,11 +323,35 @@ export const processarArquivos = createServerFn({ method: "POST" })
         lastKey = key;
       }
 
+      const BRL_FMT = `"R$" #,##0.00;[Red]-"R$" #,##0.00`;
+      const applyBRL = (ws: XLSX.WorkSheet, headerNames: string[]) => {
+        const ref = ws["!ref"]; if (!ref) return;
+        const range = XLSX.utils.decode_range(ref);
+        // mapeia headers (linha 0) -> índice de coluna
+        const cols: number[] = [];
+        for (let C = range.s.c; C <= range.e.c; C++) {
+          const cell = ws[XLSX.utils.encode_cell({ r: 0, c: C })];
+          if (cell && headerNames.includes(String(cell.v))) cols.push(C);
+        }
+        for (const C of cols) {
+          for (let R = 1; R <= range.e.r; R++) {
+            const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+            if (cell && cell.v != null && cell.v !== "") {
+              cell.t = "n"; cell.v = Number(cell.v); cell.z = BRL_FMT;
+            }
+          }
+        }
+      };
+
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(baseDiariaEnriq), "BASE_DIARIA_ENRIQUECIDA");
+      const wsEnriq = XLSX.utils.json_to_sheet(baseDiariaEnriq);
+      applyBRL(wsEnriq, ["Valor"]);
+      XLSX.utils.book_append_sheet(wb, wsEnriq, "BASE_DIARIA_ENRIQUECIDA");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(alertasSheet.length ? alertasSheet : [{ info: "Nenhum alerta" }]), "ALERTAS");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monitoramentoAOA), "MONITORAMENTO");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientesClassif.length ? clientesClassif : [{ info: "Sem clientes identificados" }]), "CLIENTES_CLASSIFICADOS");
+      const wsClient = XLSX.utils.json_to_sheet(clientesClassif.length ? clientesClassif : [{ info: "Sem clientes identificados" }]);
+      applyBRL(wsClient, ["total_gasto"]);
+      XLSX.utils.book_append_sheet(wb, wsClient, "CLIENTES_CLASSIFICADOS");
 
       const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
