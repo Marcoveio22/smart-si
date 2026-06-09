@@ -323,11 +323,35 @@ export const processarArquivos = createServerFn({ method: "POST" })
         lastKey = key;
       }
 
+      const BRL_FMT = `"R$" #,##0.00;[Red]-"R$" #,##0.00`;
+      const applyBRL = (ws: XLSX.WorkSheet, headerNames: string[]) => {
+        const ref = ws["!ref"]; if (!ref) return;
+        const range = XLSX.utils.decode_range(ref);
+        // mapeia headers (linha 0) -> índice de coluna
+        const cols: number[] = [];
+        for (let C = range.s.c; C <= range.e.c; C++) {
+          const cell = ws[XLSX.utils.encode_cell({ r: 0, c: C })];
+          if (cell && headerNames.includes(String(cell.v))) cols.push(C);
+        }
+        for (const C of cols) {
+          for (let R = 1; R <= range.e.r; R++) {
+            const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+            if (cell && cell.v != null && cell.v !== "") {
+              cell.t = "n"; cell.v = Number(cell.v); cell.z = BRL_FMT;
+            }
+          }
+        }
+      };
+
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(baseDiariaEnriq), "BASE_DIARIA_ENRIQUECIDA");
+      const wsEnriq = XLSX.utils.json_to_sheet(baseDiariaEnriq);
+      applyBRL(wsEnriq, ["Valor"]);
+      XLSX.utils.book_append_sheet(wb, wsEnriq, "BASE_DIARIA_ENRIQUECIDA");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(alertasSheet.length ? alertasSheet : [{ info: "Nenhum alerta" }]), "ALERTAS");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monitoramentoAOA), "MONITORAMENTO");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(clientesClassif.length ? clientesClassif : [{ info: "Sem clientes identificados" }]), "CLIENTES_CLASSIFICADOS");
+      const wsClient = XLSX.utils.json_to_sheet(clientesClassif.length ? clientesClassif : [{ info: "Sem clientes identificados" }]);
+      applyBRL(wsClient, ["total_gasto"]);
+      XLSX.utils.book_append_sheet(wb, wsClient, "CLIENTES_CLASSIFICADOS");
 
       const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
