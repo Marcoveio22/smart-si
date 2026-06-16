@@ -291,6 +291,15 @@ function ClienteDetails({ cliente }: { cliente: any }) {
   );
 }
 
+function Stat({ label, value }: { label: string; value?: number }) {
+  return (
+    <div className="rounded-md border bg-muted/30 px-3 py-2">
+      <div className="text-[10px] uppercase text-muted-foreground tracking-wide">{label}</div>
+      <div className="text-lg font-bold tabular-nums">{value ?? "—"}</div>
+    </div>
+  );
+}
+
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="flex justify-between border-b border-border/50 py-2"><span className="text-muted-foreground">{label}</span><span className="font-medium">{children}</span></div>;
 }
