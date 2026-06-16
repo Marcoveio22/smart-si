@@ -27,6 +27,7 @@ type Summary = {
   alertas: number; faturamento: number;
   linhasLidas?: number; linhasProcessadas?: number; linhasExportadas?: number;
   consolidadoNome?: string; consolidadoPath?: string;
+  cartoesUnicosPlanilha?: number; clientesAtualizados?: number; clientesNoBanco?: number; sincronizado?: boolean;
 };
 
 
