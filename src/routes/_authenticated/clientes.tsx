@@ -24,8 +24,63 @@ function ClientesPage() {
   const [minGasto, setMinGasto] = useState("");
 
   const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ["clientes"],
-    queryFn: async () => (await supabase.from("clientes").select("*").order("total_gasto", { ascending: false })).data ?? [],
+    queryKey: ["clientes", "all"],
+    queryFn: async () => {
+      // Paginação manual: o Supabase limita SELECT a 1000 linhas por requisição.
+      // Sem isso, clientes SILVER de baixo gasto ficavam fora da página inicial
+      // ordenada por total_gasto desc e pareciam "não existir".
+      const pageSize = 1000;
+      let from = 0;
+      const all: any[] = [];
+      // Loop até esgotar
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error } = await supabase
+          .from("clientes")
+          .select("*")
+          .order("total_gasto", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      console.log("[Clientes] Total carregado:", all.length);
+      return all;
+    },
+  });
+
+  const { data: counts } = useQuery({
+    queryKey: ["clientes", "counts"],
+    queryFn: async () => {
+      const ratings = ["DIAMOND", "GOLD", "SILVER", "RED", "TRUSTED"] as const;
+      const status = ["TRUSTED", "RED_FLAG", "NEUTRO"] as const;
+      const out: Record<string, number> = {};
+      await Promise.all(
+        ratings.map(async (r) => {
+          const { count } = await supabase
+            .from("clientes")
+            .select("*", { count: "exact", head: true })
+            .eq("rating_final", r);
+          out[`rating_${r}`] = count ?? 0;
+        }),
+      );
+      await Promise.all(
+        status.map(async (s) => {
+          const { count } = await supabase
+            .from("clientes")
+            .select("*", { count: "exact", head: true })
+            .eq("status_manual", s);
+          out[`status_${s}`] = count ?? 0;
+        }),
+      );
+      const { count: total } = await supabase
+        .from("clientes")
+        .select("*", { count: "exact", head: true });
+      out.total = total ?? 0;
+      return out;
+    },
   });
 
   // Normaliza removendo espaços, asteriscos, traços e caracteres invisíveis para casar
@@ -66,6 +121,27 @@ function ClientesPage() {
         <h1 className="text-2xl font-bold">Clientes</h1>
         <p className="text-sm text-muted-foreground">Classificação inteligente e histórico de comportamento</p>
       </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Diagnóstico — clientes no banco</div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
+            <Stat label="DIAMOND" value={counts?.rating_DIAMOND} />
+            <Stat label="GOLD" value={counts?.rating_GOLD} />
+            <Stat label="SILVER" value={counts?.rating_SILVER} />
+            <Stat label="RED" value={counts?.rating_RED} />
+            <Stat label="TRUSTED (rating)" value={counts?.rating_TRUSTED} />
+            <Stat label="🟢 TRUSTED manual" value={counts?.status_TRUSTED} />
+            <Stat label="🔴 RED FLAG manual" value={counts?.status_RED_FLAG} />
+            <Stat label="⚪ NEUTRO manual" value={counts?.status_NEUTRO} />
+            <Stat label="Total no banco" value={counts?.total} />
+            <Stat label="Carregados em memória" value={clientes.length} />
+          </div>
+          <div className="mt-2 text-[11px] text-muted-foreground font-mono">
+            query: supabase.from("clientes").select("*").order("total_gasto", desc).range(0, N) — sem filtro de rating
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-4 grid gap-3 md:grid-cols-4">
@@ -212,6 +288,15 @@ function ClienteDetails({ cliente }: { cliente: any }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function Stat({ label, value }: { label: string; value?: number }) {
+  return (
+    <div className="rounded-md border bg-muted/30 px-3 py-2">
+      <div className="text-[10px] uppercase text-muted-foreground tracking-wide">{label}</div>
+      <div className="text-lg font-bold tabular-nums">{value ?? "—"}</div>
+    </div>
   );
 }
 
