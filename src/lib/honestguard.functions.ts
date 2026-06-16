@@ -90,7 +90,12 @@ function percentile(sorted: number[], p: number): number {
 const PIX_TOKEN = "PIX";
 function normalizeCartao(v: any): string {
   if (v == null) return PIX_TOKEN;
-  const s = String(v).trim();
+  // remove zero-width / BOM / NBSP / control chars, colapsa espaços internos
+  let s = String(v)
+    .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+    .replace(/[\x00-\x1F\x7F]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!s) return PIX_TOKEN;
   const up = s.toUpperCase();
   if (["NAN", "NULL", "N/A", "NONE", "-", "#N/A", "NA"].includes(up)) return PIX_TOKEN;
