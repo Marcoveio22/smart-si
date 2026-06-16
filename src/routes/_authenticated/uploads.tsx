@@ -132,6 +132,21 @@ function UploadsPage() {
                 <span>Exportadas: <b>{summary.linhasExportadas}</b></span>
               </div>
             )}
+            {summary.cartoesUnicosPlanilha != null && (
+              <div className={cn(
+                "mb-3 p-3 rounded-md text-xs space-y-1 border",
+                summary.sincronizado ? "bg-[var(--rating-trusted)]/10 border-[var(--rating-trusted)]/40" : "bg-destructive/10 border-destructive/40"
+              )}>
+                <div className="flex items-center gap-2 font-semibold">
+                  {summary.sincronizado
+                    ? <><CheckCircle2 className="h-4 w-4 text-[var(--rating-trusted)]" />Sincronização OK</>
+                    : <><AlertCircle className="h-4 w-4 text-destructive" />Divergência de sincronização</>}
+                </div>
+                <div>Cartões únicos na planilha: <b>{summary.cartoesUnicosPlanilha}</b></div>
+                <div>Clientes atualizados nesta execução: <b>{summary.clientesAtualizados}</b></div>
+                <div>Clientes encontrados no banco: <b>{summary.clientesNoBanco}</b></div>
+              </div>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <Stat label="Transações" value={summary.totalTransacoes} />
               <Stat label="Clientes" value={summary.totalClientes} />
