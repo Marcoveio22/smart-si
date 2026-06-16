@@ -381,6 +381,17 @@ export const processarArquivos = createServerFn({ method: "POST" })
         arquivo_consolidado_gerado_em: new Date().toISOString(),
       }).eq("id", data.processamentoId);
 
+      // === Diagnóstico de sincronização ===
+      const cartoesUnicosPlanilha = new Set(transacoes.filter((t) => !t.isPix).map((t) => t.numero_cartao)).size;
+      const { count: clientesNoBanco } = await supabaseAdmin
+        .from("clientes").select("*", { count: "exact", head: true });
+      const clientesAtualizados = agg.size;
+      const sincronizado = cartoesUnicosPlanilha === clientesAtualizados;
+
+      console.log(`[HonestGuard] Linhas lidas: ${linhasLidas} | Processadas: ${linhasProcessadas} | Transações inseridas: ${txRows.length}`);
+      console.log(`[HonestGuard] Cartões únicos planilha: ${cartoesUnicosPlanilha} | Clientes atualizados: ${clientesAtualizados} | Clientes no banco: ${clientesNoBanco}`);
+      if (!sincronizado) console.warn(`[HonestGuard] ⚠ Divergência: planilha=${cartoesUnicosPlanilha} vs atualizados=${clientesAtualizados}`);
+
       return {
         ok: true,
         totalTransacoes: transacoes.length,
@@ -390,6 +401,10 @@ export const processarArquivos = createServerFn({ method: "POST" })
         faturamento, p75, p90,
         linhasLidas, linhasProcessadas, linhasExportadas,
         consolidadoNome, consolidadoPath,
+        cartoesUnicosPlanilha,
+        clientesAtualizados,
+        clientesNoBanco: clientesNoBanco ?? 0,
+        sincronizado,
       };
     } catch (e: any) {
       await supabaseAdmin.from("processamentos").update({
