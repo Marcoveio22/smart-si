@@ -123,6 +123,27 @@ function ClientesPage() {
       </div>
 
       <Card>
+        <CardContent className="p-4">
+          <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">Diagnóstico — clientes no banco</div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
+            <Stat label="DIAMOND" value={counts?.rating_DIAMOND} />
+            <Stat label="GOLD" value={counts?.rating_GOLD} />
+            <Stat label="SILVER" value={counts?.rating_SILVER} />
+            <Stat label="RED" value={counts?.rating_RED} />
+            <Stat label="TRUSTED (rating)" value={counts?.rating_TRUSTED} />
+            <Stat label="🟢 TRUSTED manual" value={counts?.status_TRUSTED} />
+            <Stat label="🔴 RED FLAG manual" value={counts?.status_RED_FLAG} />
+            <Stat label="⚪ NEUTRO manual" value={counts?.status_NEUTRO} />
+            <Stat label="Total no banco" value={counts?.total} />
+            <Stat label="Carregados em memória" value={clientes.length} />
+          </div>
+          <div className="mt-2 text-[11px] text-muted-foreground font-mono">
+            query: supabase.from("clientes").select("*").order("total_gasto", desc).range(0, N) — sem filtro de rating
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardContent className="p-4 grid gap-3 md:grid-cols-4">
           <Input placeholder="Cartão: completo, parcial, BIN ou últimos 4" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={rating} onValueChange={setRating}>
