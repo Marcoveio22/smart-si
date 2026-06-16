@@ -28,8 +28,32 @@ function ClientesPage() {
     queryFn: async () => (await supabase.from("clientes").select("*").order("total_gasto", { ascending: false })).data ?? [],
   });
 
+  // Normaliza removendo espaços, asteriscos, traços e caracteres invisíveis para casar
+  // máscaras diferentes (ex: "5502********4016" vs "5502******4016").
+  const normalizeSearch = (s: string) =>
+    s.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "").replace(/[\s\*\-]/g, "").toLowerCase();
+  const onlyDigits = (s: string) => s.replace(/\D/g, "");
+
   const filtered = clientes.filter((c: any) => {
-    if (search && !c.numero_cartao.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search) {
+      const card = String(c.numero_cartao ?? "");
+      const cardNorm = normalizeSearch(card);
+      const cardDigits = onlyDigits(card);
+      const qRaw = search.trim();
+      const qNorm = normalizeSearch(qRaw);
+      const qDigits = onlyDigits(qRaw);
+      // Match em qualquer uma das estratégias:
+      // 1) substring sobre versão normalizada (full ou parcial, ignora máscara)
+      // 2) substring no texto original (preserva busca por máscara literal)
+      // 3) últimos 4 dígitos
+      // 4) primeiros 4-6 dígitos (BIN)
+      const matches =
+        (qNorm && cardNorm.includes(qNorm)) ||
+        card.toLowerCase().includes(qRaw.toLowerCase()) ||
+        (qDigits.length === 4 && cardDigits.endsWith(qDigits)) ||
+        (qDigits.length >= 4 && qDigits.length <= 6 && cardDigits.startsWith(qDigits));
+      if (!matches) return false;
+    }
     if (rating !== "all" && c.rating_final !== rating) return false;
     if (statusManual !== "all" && (c.status_manual ?? "NEUTRO") !== statusManual) return false;
     if (minGasto && Number(c.total_gasto) < Number(minGasto)) return false;
@@ -45,7 +69,7 @@ function ClientesPage() {
 
       <Card>
         <CardContent className="p-4 grid gap-3 md:grid-cols-4">
-          <Input placeholder="Buscar por cartão..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Cartão: completo, parcial, BIN ou últimos 4" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={rating} onValueChange={setRating}>
             <SelectTrigger><SelectValue placeholder="Rating" /></SelectTrigger>
             <SelectContent>
