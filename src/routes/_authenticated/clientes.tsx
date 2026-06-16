@@ -69,7 +69,7 @@ function ClientesPage() {
 
       <Card>
         <CardContent className="p-4 grid gap-3 md:grid-cols-4">
-          <Input placeholder="Buscar por cartão..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Cartão: completo, parcial, BIN ou últimos 4" value={search} onChange={(e) => setSearch(e.target.value)} />
           <Select value={rating} onValueChange={setRating}>
             <SelectTrigger><SelectValue placeholder="Rating" /></SelectTrigger>
             <SelectContent>
