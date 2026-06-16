@@ -24,8 +24,63 @@ function ClientesPage() {
   const [minGasto, setMinGasto] = useState("");
 
   const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ["clientes"],
-    queryFn: async () => (await supabase.from("clientes").select("*").order("total_gasto", { ascending: false })).data ?? [],
+    queryKey: ["clientes", "all"],
+    queryFn: async () => {
+      // Paginação manual: o Supabase limita SELECT a 1000 linhas por requisição.
+      // Sem isso, clientes SILVER de baixo gasto ficavam fora da página inicial
+      // ordenada por total_gasto desc e pareciam "não existir".
+      const pageSize = 1000;
+      let from = 0;
+      const all: any[] = [];
+      // Loop até esgotar
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { data, error } = await supabase
+          .from("clientes")
+          .select("*")
+          .order("total_gasto", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      console.log("[Clientes] Total carregado:", all.length);
+      return all;
+    },
+  });
+
+  const { data: counts } = useQuery({
+    queryKey: ["clientes", "counts"],
+    queryFn: async () => {
+      const ratings = ["DIAMOND", "GOLD", "SILVER", "RED", "TRUSTED"] as const;
+      const status = ["TRUSTED", "RED_FLAG", "NEUTRO"] as const;
+      const out: Record<string, number> = {};
+      await Promise.all(
+        ratings.map(async (r) => {
+          const { count } = await supabase
+            .from("clientes")
+            .select("*", { count: "exact", head: true })
+            .eq("rating_final", r);
+          out[`rating_${r}`] = count ?? 0;
+        }),
+      );
+      await Promise.all(
+        status.map(async (s) => {
+          const { count } = await supabase
+            .from("clientes")
+            .select("*", { count: "exact", head: true })
+            .eq("status_manual", s);
+          out[`status_${s}`] = count ?? 0;
+        }),
+      );
+      const { count: total } = await supabase
+        .from("clientes")
+        .select("*", { count: "exact", head: true });
+      out.total = total ?? 0;
+      return out;
+    },
   });
 
   // Normaliza removendo espaços, asteriscos, traços e caracteres invisíveis para casar
