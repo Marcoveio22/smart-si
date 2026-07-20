@@ -9,10 +9,22 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/auth")({ component: AuthPage });
+export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
+  component: AuthPage,
+});
+
+function safeNext(next: string | undefined): string | null {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
+}
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const dest = safeNext(next);
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,25 +32,30 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/dashboard", replace: true });
+      if (data.user) {
+        if (dest) window.location.href = dest;
+        else navigate({ to: "/dashboard", replace: true });
+      }
     });
-  }, [navigate]);
+  }, [navigate, dest]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       if (mode === "signup") {
+        const emailRedirectTo = dest ? `${window.location.origin}${dest}` : `${window.location.origin}/dashboard`;
         const { error } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+          options: { emailRedirectTo },
         });
         if (error) throw error;
         toast.success("Conta criada! Você já pode acessar.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/dashboard" });
+        if (dest) window.location.href = dest;
+        else navigate({ to: "/dashboard" });
       }
     } catch (err: any) {
       toast.error(err.message ?? "Falha na autenticação");
@@ -48,9 +65,13 @@ function AuthPage() {
   };
 
   const google = async () => {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const redirect_uri = dest
+      ? `${window.location.origin}/auth?next=${encodeURIComponent(dest)}`
+      : window.location.origin;
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri });
     if (r.error) toast.error("Falha no login com Google");
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sidebar to-background p-4">

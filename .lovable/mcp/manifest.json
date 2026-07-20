@@ -1,0 +1,141 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://xwkqhtbyatdsihgepold.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "smart-si-monitoramento",
+      "version": "0.1.0",
+      "title": "SMART SI Monitoramento"
+    },
+    "tools": [
+      {
+        "name": "listar_clientes",
+        "title": "Listar clientes",
+        "description": "Lista clientes monitorados com rating, status manual, gasto e ocorrências. Filtre por rating (DIAMOND, GOLD, SILVER, RED) ou status manual (TRUSTED, NEUTRO, RED_FLAG).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "rating": {
+              "type": "string",
+              "enum": [
+                "DIAMOND",
+                "GOLD",
+                "SILVER",
+                "RED"
+              ]
+            },
+            "status_manual": {
+              "type": "string",
+              "enum": [
+                "TRUSTED",
+                "NEUTRO",
+                "RED_FLAG"
+              ]
+            },
+            "numero_cartao": {
+              "type": "string",
+              "description": "Busca parcial por número de cartão"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_alertas",
+        "title": "Listar alertas",
+        "description": "Lista alertas operacionais gerados pela engine HonestGuard, com gravidade e tipo.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "gravidade": {
+              "type": "string",
+              "enum": [
+                "baixa",
+                "media",
+                "alta"
+              ]
+            },
+            "tipo": {
+              "type": "string"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "listar_ocorrencias",
+        "title": "Listar ocorrências",
+        "description": "Lista ocorrências registradas manualmente (furto, suspeita, etc).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "resumo_dashboard",
+        "title": "Resumo do dashboard",
+        "description": "Retorna contagens por rating, status manual, totais de clientes, alertas e último processamento.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
