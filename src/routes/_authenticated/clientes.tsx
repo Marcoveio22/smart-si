@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTenant } from "@/hooks/useTenant";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,24 +23,20 @@ function ClientesPage() {
   const [rating, setRating] = useState("all");
   const [statusManual, setStatusManual] = useState("all");
   const [minGasto, setMinGasto] = useState("");
+  const { selectedLojaId, tenant } = useTenant();
 
   const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ["clientes", "all"],
+    queryKey: ["clientes", "all", selectedLojaId ?? "own"],
+    enabled: !!tenant,
     queryFn: async () => {
-      // Paginação manual: o Supabase limita SELECT a 1000 linhas por requisição.
-      // Sem isso, clientes SILVER de baixo gasto ficavam fora da página inicial
-      // ordenada por total_gasto desc e pareciam "não existir".
       const pageSize = 1000;
       let from = 0;
       const all: any[] = [];
-      // Loop até esgotar
       // eslint-disable-next-line no-constant-condition
       while (true) {
-        const { data, error } = await supabase
-          .from("clientes")
-          .select("*")
-          .order("total_gasto", { ascending: false })
-          .range(from, from + pageSize - 1);
+        let q = supabase.from("clientes").select("*").order("total_gasto", { ascending: false }).range(from, from + pageSize - 1);
+        if (selectedLojaId) q = q.eq("loja_id", selectedLojaId);
+        const { data, error } = await q;
         if (error) throw error;
         if (!data || data.length === 0) break;
         all.push(...data);
