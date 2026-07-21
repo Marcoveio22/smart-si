@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Bell, FileWarning, Cpu, UploadCloud, Settings, ShieldCheck, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Bell, FileWarning, Cpu, UploadCloud, Settings, ShieldCheck, LogOut, Store } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -13,6 +13,7 @@ const items = [
   { title: "Ocorrências", url: "/ocorrencias", icon: FileWarning },
   { title: "Processamentos", url: "/processamentos", icon: Cpu },
   { title: "Processamento Diário", url: "/uploads", icon: UploadCloud },
+  { title: "Loja", url: "/configuracoes/loja", icon: Store },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
