@@ -36,9 +36,11 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: stri
 
 function Dashboard() {
   const fetchStats = useServerFn(getDashboardStats);
+  const { selectedLojaId, tenant } = useTenant();
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: () => fetchStats(),
+    queryKey: ["dashboard-stats", selectedLojaId ?? "own"],
+    queryFn: () => fetchStats({ data: { lojaId: selectedLojaId } }),
+    enabled: !!tenant,
   });
 
   if (isLoading || !data) {
