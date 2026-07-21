@@ -1,49 +1,56 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
 
-export const getDashboardStats = createServerFn({ method: "GET" })
+export const getDashboardStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d) => z.object({ lojaId: z.string().uuid().nullable().optional() }).parse(d ?? {}))
+  .handler(async ({ data, context }) => {
     const { supabase } = context;
+    const { data: isAdminRpc } = await supabase.rpc("is_admin");
+    const isAdmin = !!isAdminRpc;
+    // Admin selecting a specific loja adds explicit filter; regular user is auto-scoped by RLS.
+    const lojaFilter: string | null = isAdmin ? (data.lojaId ?? null) : null;
+    const scope = <T extends { eq: any }>(q: T) => (lojaFilter ? (q as any).eq("loja_id", lojaFilter) : q);
 
     const ratings = ["DIAMOND", "GOLD", "SILVER", "RED", "TRUSTED"] as const;
     const statuses = ["TRUSTED", "NEUTRO", "RED_FLAG"] as const;
 
     const ratingCountsP = Promise.all(
-      ratings.map((r) =>
-        supabase.from("clientes").select("*", { count: "exact", head: true }).eq("rating_final", r),
-      ),
+      ratings.map((r) => scope(supabase.from("clientes").select("*", { count: "exact", head: true }).eq("rating_final", r))),
     );
     const statusCountsP = Promise.all(
       statuses.map((s) =>
         s === "NEUTRO"
-          ? supabase.from("clientes").select("*", { count: "exact", head: true }).or("status_manual.is.null,status_manual.eq.NEUTRO")
-          : supabase.from("clientes").select("*", { count: "exact", head: true }).eq("status_manual", s),
+          ? scope(supabase.from("clientes").select("*", { count: "exact", head: true }).or("status_manual.is.null,status_manual.eq.NEUTRO"))
+          : scope(supabase.from("clientes").select("*", { count: "exact", head: true }).eq("status_manual", s)),
       ),
     );
-    const totalClientesP = supabase.from("clientes").select("*", { count: "exact", head: true });
-    const alertasAtivosP = supabase.from("alertas").select("id, created_at, gravidade").eq("status", "ativo");
-    const top10P = supabase.from("clientes")
-      .select("numero_cartao, rating_final, status_manual, total_compras, total_gasto")
-      .order("total_gasto", { ascending: false }).limit(10);
+    const totalClientesP = scope(supabase.from("clientes").select("*", { count: "exact", head: true }));
+    const alertasAtivosP = scope(supabase.from("alertas").select("id, created_at, gravidade").eq("status", "ativo"));
+    const top10P = scope(
+      supabase.from("clientes")
+        .select("numero_cartao, rating_final, status_manual, total_compras, total_gasto")
+        .order("total_gasto", { ascending: false }).limit(10),
+    );
 
-    // Aggregate transactions in pages (Supabase caps at 1000 per request)
+    // Aggregate transactions in pages
     let from = 0; const page = 1000;
     let faturamentoTotal = 0;
     const fatPorMes = new Map<string, number>();
     while (true) {
-      const { data, error } = await supabase
-        .from("transacoes").select("valor, data_transacao").range(from, from + page - 1);
+      const q = scope(supabase.from("transacoes").select("valor, data_transacao").range(from, from + page - 1));
+      const { data: rows, error } = await q;
       if (error) throw error;
-      if (!data?.length) break;
-      for (const t of data) {
-        const v = Number(t.valor) || 0;
+      if (!rows?.length) break;
+      for (const t of rows) {
+        const v = Number((t as any).valor) || 0;
         faturamentoTotal += v;
-        const d = new Date(t.data_transacao);
+        const d = new Date((t as any).data_transacao);
         const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         fatPorMes.set(k, (fatPorMes.get(k) ?? 0) + v);
       }
-      if (data.length < page) break;
+      if (rows.length < page) break;
       from += page;
     }
 
@@ -56,7 +63,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
     statuses.forEach((s, i) => { byStatusManual[s] = statusCounts[i].count ?? 0; });
 
     const alertasPorDia = new Map<string, number>();
-    (alertas.data ?? []).forEach((a) => {
+    ((alertas.data ?? []) as any[]).forEach((a) => {
       const d = new Date(a.created_at).toISOString().slice(0, 10);
       alertasPorDia.set(d, (alertasPorDia.get(d) ?? 0) + 1);
     });
