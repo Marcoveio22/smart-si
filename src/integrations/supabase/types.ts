@@ -419,6 +419,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bootstrap_admin_self: { Args: never; Returns: boolean }
       current_loja_id: { Args: never; Returns: string }
       has_role: {
         Args: {
