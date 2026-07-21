@@ -69,9 +69,10 @@ function UploadsPage() {
       if (u1.error) throw u1.error;
       if (u2.error) throw u2.error;
 
+      const { data: prof } = await supabase.from("profiles").select("loja_id").eq("id", user!.id).maybeSingle();
       const { data: proc, error } = await supabase.from("processamentos").insert({
         arquivo_diaria: diariaPath, arquivo_historico: histPath,
-        status: "aguardando", created_by: user?.id,
+        status: "aguardando", created_by: user?.id, loja_id: prof?.loja_id ?? null,
       }).select("id").single();
       if (error) throw error;
 

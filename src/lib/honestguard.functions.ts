@@ -138,8 +138,20 @@ export const processarArquivos = createServerFn({ method: "POST" })
 
       const linhasLidas = diaria.length;
 
-      const { data: lojas } = await supabaseAdmin.from("lojas").select("id").limit(1);
-      const defaultLoja = lojas?.[0]?.id ?? null;
+      // Derive loja_id: prefer the one on the processamento row, fallback to the caller's profile loja.
+      const { data: procRow } = await supabaseAdmin
+        .from("processamentos").select("loja_id, created_by").eq("id", data.processamentoId).maybeSingle();
+      let defaultLoja: string | null = procRow?.loja_id ?? null;
+      if (!defaultLoja && procRow?.created_by) {
+        const { data: prof } = await supabaseAdmin
+          .from("profiles").select("loja_id").eq("id", procRow.created_by).maybeSingle();
+        defaultLoja = prof?.loja_id ?? null;
+      }
+      if (!defaultLoja) defaultLoja = "00000000-0000-0000-0000-000000000001";
+      // Persist loja_id on the processamento so downstream reads (RLS) work correctly
+      if (procRow && procRow.loja_id !== defaultLoja) {
+        await supabaseAdmin.from("processamentos").update({ loja_id: defaultLoja }).eq("id", data.processamentoId);
+      }
 
       type Tx = {
         numero_cartao: string; isPix: boolean; valor: number; data_transacao: Date;

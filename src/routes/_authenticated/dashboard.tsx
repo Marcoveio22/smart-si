@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getDashboardStats } from "@/lib/dashboard.functions";
+import { useTenant } from "@/hooks/useTenant";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RatingBadge } from "@/components/RatingBadge";
 import { StatusManualBadge } from "@/components/StatusManualBadge";
@@ -36,9 +37,11 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: stri
 
 function Dashboard() {
   const fetchStats = useServerFn(getDashboardStats);
+  const { selectedLojaId, tenant } = useTenant();
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-stats"],
-    queryFn: () => fetchStats(),
+    queryKey: ["dashboard-stats", selectedLojaId ?? "own"],
+    queryFn: () => fetchStats({ data: { lojaId: selectedLojaId } }),
+    enabled: !!tenant,
   });
 
   if (isLoading || !data) {
