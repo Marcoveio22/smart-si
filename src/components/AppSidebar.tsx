@@ -1,10 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Bell, FileWarning, Cpu, UploadCloud, Settings, ShieldCheck, LogOut, Store } from "lucide-react";
+import { LayoutDashboard, Users, Bell, FileWarning, Cpu, UploadCloud, Settings, ShieldCheck, LogOut, Store, UserCog } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -16,11 +17,16 @@ const items = [
   { title: "Loja", url: "/configuracoes/loja", icon: Store },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
+const adminItems = [
+  { title: "Usuários & Lojas", url: "/configuracoes/usuarios", icon: UserCog },
+];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const { tenant } = useTenant();
+  const menu = tenant?.isAdmin ? [...items, ...adminItems] : items;
 
   return (
     <Sidebar collapsible="icon">
@@ -42,7 +48,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Operação</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => {
+              {menu.map((item) => {
                 const active = pathname === item.url || pathname.startsWith(item.url + "/");
                 return (
                   <SidebarMenuItem key={item.url}>

@@ -52,9 +52,12 @@ function TopHeader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenant?.userId]);
 
-  const lojaLabel = tenant?.isAdmin
-    ? (selectedLojaId ? tenant.lojas.find((l) => l.id === selectedLojaId)?.nome ?? "—" : "Todas as lojas")
-    : tenant?.lojaAtual?.nome ?? "—";
+  const isAdmin = !!tenant?.isAdmin;
+  const showSelector = isAdmin || (tenant?.lojas.length ?? 0) > 1;
+  const currentLoja = tenant?.lojas.find((l) => l.id === selectedLojaId) ?? null;
+  const lojaLabel = isAdmin
+    ? (selectedLojaId ? currentLoja?.nome ?? "—" : "Todas as lojas")
+    : currentLoja?.nome ?? tenant?.lojaAtual?.nome ?? "—";
 
   return (
     <header className="h-16 flex items-center gap-3 border-b bg-card/50 backdrop-blur px-4 sticky top-0 z-10">
@@ -72,16 +75,18 @@ function TopHeader() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
-        {tenant?.isAdmin && (
+        {showSelector && tenant && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold uppercase text-muted-foreground">Admin · Loja</span>
+            <span className="text-xs font-semibold uppercase text-muted-foreground">
+              {isAdmin ? "Admin · Loja" : "Loja"}
+            </span>
             <Select
-              value={selectedLojaId ?? "__ALL__"}
+              value={selectedLojaId ?? (isAdmin ? "__ALL__" : "")}
               onValueChange={(v) => setSelectedLojaId(v === "__ALL__" ? null : v)}
             >
               <SelectTrigger className="h-8 w-56 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__ALL__">Todas as lojas</SelectItem>
+                {isAdmin && <SelectItem value="__ALL__">Todas as lojas</SelectItem>}
                 {tenant.lojas.map((l) => (
                   <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
                 ))}

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -19,9 +20,14 @@ const statusClr: Record<string, string> = {
 
 function ProcessamentosPage() {
   const [selected, setSelected] = useState<any>(null);
+  const { selectedLojaId } = useTenant();
   const { data: items = [] } = useQuery({
-    queryKey: ["processamentos"],
-    queryFn: async () => (await supabase.from("processamentos").select("*").order("data_referencia", { ascending: false })).data ?? [],
+    queryKey: ["processamentos", selectedLojaId ?? "own"],
+    queryFn: async () => {
+      let q = supabase.from("processamentos").select("*").order("data_referencia", { ascending: false });
+      if (selectedLojaId) q = q.eq("loja_id", selectedLojaId);
+      return (await q).data ?? [];
+    },
   });
 
   return (

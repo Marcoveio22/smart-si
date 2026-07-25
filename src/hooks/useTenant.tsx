@@ -21,7 +21,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   });
 
   const stored = typeof window !== "undefined" ? window.localStorage.getItem(STORAGE_KEY) : null;
-  const selected = stored === "__ALL__" ? null : stored;
+  const storedSel = stored === "__ALL__" ? null : stored;
 
   const setSelectedLojaId = (id: string | null) => {
     if (typeof window === "undefined") return;
@@ -30,8 +30,18 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     window.location.reload();
   };
 
-  // For non-admins, always use their own loja
-  const effective = data?.isAdmin ? selected : data?.lojaId ?? null;
+  // Admin: null = "all"; non-admin: must always resolve to one loja from their list.
+  let effective: string | null;
+  if (data?.isAdmin) {
+    effective = storedSel;
+  } else if (data) {
+    const allowed = new Set(data.lojas.map((l) => l.id));
+    if (storedSel && allowed.has(storedSel)) effective = storedSel;
+    else if (data.lojaId && allowed.has(data.lojaId)) effective = data.lojaId;
+    else effective = data.lojas[0]?.id ?? null;
+  } else {
+    effective = null;
+  }
 
   return (
     <Ctx.Provider value={{ tenant: data ?? null, isLoading, selectedLojaId: effective, setSelectedLojaId }}>

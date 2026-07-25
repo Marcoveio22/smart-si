@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +19,14 @@ const TIPOS = ["furto", "suspeita", "chargeback", "outro"];
 
 function OcorrenciasPage() {
   const qc = useQueryClient();
+  const { selectedLojaId } = useTenant();
   const { data: items = [] } = useQuery({
-    queryKey: ["ocorrencias"],
-    queryFn: async () => (await supabase.from("ocorrencias").select("*").order("data_ocorrencia", { ascending: false })).data ?? [],
+    queryKey: ["ocorrencias", selectedLojaId ?? "own"],
+    queryFn: async () => {
+      let q = supabase.from("ocorrencias").select("*").order("data_ocorrencia", { ascending: false });
+      if (selectedLojaId) q = q.eq("loja_id", selectedLojaId);
+      return (await q).data ?? [];
+    },
   });
 
   const resolve = async (id: string) => {
@@ -75,6 +81,7 @@ function OcorrenciasPage() {
 }
 
 function OcorrenciaForm({ existing, onDone, trigger }: { existing?: any; onDone: () => void; trigger?: React.ReactNode }) {
+  const { selectedLojaId, tenant } = useTenant();
   const [open, setOpen] = useState(false);
   const [numero, setNumero] = useState(existing?.numero_cartao ?? "");
   const [tipo, setTipo] = useState(existing?.tipo ?? "suspeita");
@@ -82,7 +89,10 @@ function OcorrenciaForm({ existing, onDone, trigger }: { existing?: any; onDone:
   const [data, setData] = useState(existing?.data_ocorrencia?.slice(0, 16) ?? new Date().toISOString().slice(0, 16));
 
   const submit = async () => {
-    const payload = { numero_cartao: numero, tipo, descricao, data_ocorrencia: new Date(data).toISOString() };
+    const lojaId = selectedLojaId ?? tenant?.lojaId ?? null;
+    if (!existing && !lojaId) { toast.error("Selecione uma loja no cabeçalho antes de registrar"); return; }
+    const payload: any = { numero_cartao: numero, tipo, descricao, data_ocorrencia: new Date(data).toISOString() };
+    if (!existing) payload.loja_id = lojaId;
     const { error } = existing
       ? await supabase.from("ocorrencias").update(payload).eq("id", existing.id)
       : await supabase.from("ocorrencias").insert(payload);

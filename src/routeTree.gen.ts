@@ -22,6 +22,7 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as AuthenticatedConfiguracoesUsuariosRouteImport } from './routes/_authenticated/configuracoes.usuarios'
 import { Route as AuthenticatedConfiguracoesLojaRouteImport } from './routes/_authenticated/configuracoes.loja'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
@@ -95,6 +96,12 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedConfiguracoesUsuariosRoute =
+  AuthenticatedConfiguracoesUsuariosRouteImport.update({
+    id: '/usuarios',
+    path: '/usuarios',
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
 const AuthenticatedConfiguracoesLojaRoute =
   AuthenticatedConfiguracoesLojaRouteImport.update({
     id: '/loja',
@@ -129,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
+  '/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -146,6 +154,7 @@ export interface FileRoutesByTo {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
+  '/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -165,6 +174,7 @@ export interface FileRoutesById {
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
+  '/_authenticated/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -184,6 +194,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/configuracoes/loja'
+    | '/configuracoes/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -201,6 +212,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/configuracoes/loja'
+    | '/configuracoes/usuarios'
   id:
     | '__root__'
     | '/'
@@ -219,6 +231,7 @@ export interface FileRouteTypes {
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/configuracoes/loja'
+    | '/_authenticated/configuracoes/usuarios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -325,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/configuracoes/usuarios': {
+      id: '/_authenticated/configuracoes/usuarios'
+      path: '/usuarios'
+      fullPath: '/configuracoes/usuarios'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesUsuariosRouteImport
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
+    }
     '/_authenticated/configuracoes/loja': {
       id: '/_authenticated/configuracoes/loja'
       path: '/loja'
@@ -351,11 +371,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedConfiguracoesRouteChildren {
   AuthenticatedConfiguracoesLojaRoute: typeof AuthenticatedConfiguracoesLojaRoute
+  AuthenticatedConfiguracoesUsuariosRoute: typeof AuthenticatedConfiguracoesUsuariosRoute
 }
 
 const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteChildren =
   {
     AuthenticatedConfiguracoesLojaRoute: AuthenticatedConfiguracoesLojaRoute,
+    AuthenticatedConfiguracoesUsuariosRoute:
+      AuthenticatedConfiguracoesUsuariosRoute,
   }
 
 const AuthenticatedConfiguracoesRouteWithChildren =
