@@ -7,10 +7,8 @@ export const getDashboardStats = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ lojaId: z.string().uuid().nullable().optional() }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { data: isAdminRpc } = await supabase.rpc("is_admin");
-    const isAdmin = !!isAdminRpc;
-    // Admin selecting a specific loja adds explicit filter; regular user is auto-scoped by RLS.
-    const lojaFilter: string | null = isAdmin ? (data.lojaId ?? null) : null;
+    // Always honor an explicit lojaId; admin without one sees "all" via RLS.
+    const lojaFilter: string | null = data.lojaId ?? null;
     const scope = <T extends { eq: any }>(q: T) => (lojaFilter ? (q as any).eq("loja_id", lojaFilter) : q);
 
     const ratings = ["DIAMOND", "GOLD", "SILVER", "RED", "TRUSTED"] as const;
