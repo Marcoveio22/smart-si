@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 import { processarArquivos, getConsolidadoUrl } from "@/lib/honestguard.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ function UploadsPage() {
   const qc = useQueryClient();
   const processar = useServerFn(processarArquivos);
   const getUrl = useServerFn(getConsolidadoUrl);
+  const { selectedLojaId, tenant } = useTenant();
 
   const baixarConsolidado = async (path: string) => {
     try {
@@ -49,13 +51,19 @@ function UploadsPage() {
   const [errMsg, setErrMsg] = useState<string>("");
 
   const { data: history = [] } = useQuery({
-    queryKey: ["upload-history"],
-    queryFn: async () => (await supabase.from("processamentos").select("*").order("created_at", { ascending: false }).limit(20)).data ?? [],
+    queryKey: ["upload-history", selectedLojaId ?? "own"],
+    queryFn: async () => {
+      let q = supabase.from("processamentos").select("*").order("created_at", { ascending: false }).limit(20);
+      if (selectedLojaId) q = q.eq("loja_id", selectedLojaId);
+      return (await q).data ?? [];
+    },
     refetchInterval: phase === "processing" ? 2000 : false,
   });
 
   const run = async () => {
     if (!diaria || !historico) { toast.error("Envie os dois arquivos"); return; }
+    const lojaAlvo = selectedLojaId ?? tenant?.lojaId ?? null;
+    if (!lojaAlvo) { toast.error("Selecione uma loja no cabeçalho antes de processar"); return; }
     setPhase("uploading"); setSummary(null); setErrMsg("");
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -69,10 +77,9 @@ function UploadsPage() {
       if (u1.error) throw u1.error;
       if (u2.error) throw u2.error;
 
-      const { data: prof } = await supabase.from("profiles").select("loja_id").eq("id", user!.id).maybeSingle();
       const { data: proc, error } = await supabase.from("processamentos").insert({
         arquivo_diaria: diariaPath, arquivo_historico: histPath,
-        status: "aguardando", created_by: user?.id, loja_id: prof?.loja_id ?? null,
+        status: "aguardando", created_by: user?.id, loja_id: lojaAlvo,
       }).select("id").single();
       if (error) throw error;
 

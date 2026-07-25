@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -20,11 +21,13 @@ function AlertasPage() {
   const [gravidade, setGravidade] = useState("all");
   const [status, setStatus] = useState("all");
   const [periodo, setPeriodo] = useState("30");
+  const { selectedLojaId } = useTenant();
 
   const { data: alertas = [] } = useQuery({
-    queryKey: ["alertas", gravidade, status, periodo],
+    queryKey: ["alertas", gravidade, status, periodo, selectedLojaId ?? "own"],
     queryFn: async () => {
       let q = supabase.from("alertas").select("*, clientes(numero_cartao, rating_final)").order("created_at", { ascending: false });
+      if (selectedLojaId) q = q.eq("loja_id", selectedLojaId);
       if (gravidade !== "all") q = q.eq("gravidade", gravidade);
       if (status !== "all") q = q.eq("status", status);
       if (periodo !== "all") {
