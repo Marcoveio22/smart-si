@@ -136,7 +136,7 @@ export const adminSetUserLojas = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Apenas administradores");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { error: rpcErr } = await supabaseAdmin.rpc("admin_set_user_lojas", {
+    const { error: rpcErr } = await context.supabase.rpc("admin_set_user_lojas", {
       _user_id: data.userId,
       _loja_ids: data.lojaIds,
     });
