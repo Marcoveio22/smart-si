@@ -60,8 +60,11 @@ export async function atualizarStatus(
   userId: string,
   input: { id: string; status: OcorrenciaStatus; observacao?: string | null },
 ) {
-  const patch: Record<string, unknown> = { status: input.status, status_usuario: userId };
-  if (input.observacao != null) patch.observacoes = input.observacao;
+  const patch: Database["public"]["Tables"]["ocorrencias"]["Update"] = {
+    status: input.status,
+    status_usuario: userId,
+    ...(input.observacao != null ? { observacoes: input.observacao } : {}),
+  };
   const { data, error } = await supabase
     .from("ocorrencias")
     .update(patch)
