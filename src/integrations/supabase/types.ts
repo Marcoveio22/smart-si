@@ -159,42 +159,97 @@ export type Database = {
       }
       ocorrencias: {
         Row: {
+          cliente_id: string | null
+          cliente_recorrente: boolean
           created_at: string
           created_by: string | null
+          data_cobranca: string | null
           data_ocorrencia: string
+          data_pagamento: string | null
+          data_resolucao: string | null
           descricao: string | null
           id: string
           loja_id: string | null
           numero_cartao: string
+          observacoes: string | null
+          origem: Database["public"]["Enums"]["ocorrencia_origem"]
+          prioridade: Database["public"]["Enums"]["ocorrencia_prioridade"]
+          produto_principal: string | null
           resolvida: boolean
+          responsavel: string | null
+          status: Database["public"]["Enums"]["ocorrencia_status"]
+          status_data: string
+          status_usuario: string | null
           tipo: string
+          tipo_ocorrencia: string | null
           updated_at: string
+          valor_perdido: number
+          valor_recuperado: number
         }
         Insert: {
+          cliente_id?: string | null
+          cliente_recorrente?: boolean
           created_at?: string
           created_by?: string | null
+          data_cobranca?: string | null
           data_ocorrencia?: string
+          data_pagamento?: string | null
+          data_resolucao?: string | null
           descricao?: string | null
           id?: string
           loja_id?: string | null
           numero_cartao: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["ocorrencia_origem"]
+          prioridade?: Database["public"]["Enums"]["ocorrencia_prioridade"]
+          produto_principal?: string | null
           resolvida?: boolean
+          responsavel?: string | null
+          status?: Database["public"]["Enums"]["ocorrencia_status"]
+          status_data?: string
+          status_usuario?: string | null
           tipo: string
+          tipo_ocorrencia?: string | null
           updated_at?: string
+          valor_perdido?: number
+          valor_recuperado?: number
         }
         Update: {
+          cliente_id?: string | null
+          cliente_recorrente?: boolean
           created_at?: string
           created_by?: string | null
+          data_cobranca?: string | null
           data_ocorrencia?: string
+          data_pagamento?: string | null
+          data_resolucao?: string | null
           descricao?: string | null
           id?: string
           loja_id?: string | null
           numero_cartao?: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["ocorrencia_origem"]
+          prioridade?: Database["public"]["Enums"]["ocorrencia_prioridade"]
+          produto_principal?: string | null
           resolvida?: boolean
+          responsavel?: string | null
+          status?: Database["public"]["Enums"]["ocorrencia_status"]
+          status_data?: string
+          status_usuario?: string | null
           tipo?: string
+          tipo_ocorrencia?: string | null
           updated_at?: string
+          valor_perdido?: number
+          valor_recuperado?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ocorrencias_loja_id_fkey"
             columns: ["loja_id"]
