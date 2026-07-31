@@ -466,6 +466,31 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "user"
+      cobranca_status:
+        | "Pendente"
+        | "Enviada"
+        | "Negociada"
+        | "Paga"
+        | "Cancelada"
+      ocorrencia_origem: "Manual" | "Upload" | "Automática" | "Integração"
+      ocorrencia_prioridade: "Baixa" | "Média" | "Alta" | "Crítica"
+      ocorrencia_status:
+        | "Nova"
+        | "Em análise"
+        | "Comunicado ao Síndico"
+        | "Comunicado ao RH"
+        | "Negociação"
+        | "Cobrança Enviada"
+        | "Pagamento Recebido"
+        | "Finalizada"
+        | "Arquivada"
+      recuperacao_forma:
+        | "PIX"
+        | "Dinheiro"
+        | "Cartão"
+        | "Boleto"
+        | "Desconto em folha"
+        | "Outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -594,6 +619,34 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "user"],
+      cobranca_status: [
+        "Pendente",
+        "Enviada",
+        "Negociada",
+        "Paga",
+        "Cancelada",
+      ],
+      ocorrencia_origem: ["Manual", "Upload", "Automática", "Integração"],
+      ocorrencia_prioridade: ["Baixa", "Média", "Alta", "Crítica"],
+      ocorrencia_status: [
+        "Nova",
+        "Em análise",
+        "Comunicado ao Síndico",
+        "Comunicado ao RH",
+        "Negociação",
+        "Cobrança Enviada",
+        "Pagamento Recebido",
+        "Finalizada",
+        "Arquivada",
+      ],
+      recuperacao_forma: [
+        "PIX",
+        "Dinheiro",
+        "Cartão",
+        "Boleto",
+        "Desconto em folha",
+        "Outro",
+      ],
     },
   },
 } as const
