@@ -127,6 +127,82 @@ export type Database = {
           },
         ]
       }
+      cobrancas: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          data_envio: string | null
+          data_pagamento: string | null
+          forma_envio: string | null
+          id: string
+          loja_id: string | null
+          observacao: string | null
+          ocorrencia_id: string
+          pdf_url: string | null
+          status: Database["public"]["Enums"]["cobranca_status"]
+          updated_at: string
+          usuario: string | null
+          valor: number
+          whatsapp_enviado: boolean
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          data_envio?: string | null
+          data_pagamento?: string | null
+          forma_envio?: string | null
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id: string
+          pdf_url?: string | null
+          status?: Database["public"]["Enums"]["cobranca_status"]
+          updated_at?: string
+          usuario?: string | null
+          valor?: number
+          whatsapp_enviado?: boolean
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          data_envio?: string | null
+          data_pagamento?: string | null
+          forma_envio?: string | null
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id?: string
+          pdf_url?: string | null
+          status?: Database["public"]["Enums"]["cobranca_status"]
+          updated_at?: string
+          usuario?: string | null
+          valor?: number
+          whatsapp_enviado?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobrancas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lojas: {
         Row: {
           ativo: boolean
@@ -597,6 +673,67 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recuperacoes: {
+        Row: {
+          cobranca_id: string | null
+          created_at: string
+          data: string
+          forma: Database["public"]["Enums"]["recuperacao_forma"]
+          id: string
+          loja_id: string | null
+          observacao: string | null
+          ocorrencia_id: string
+          usuario: string | null
+          valor: number
+        }
+        Insert: {
+          cobranca_id?: string | null
+          created_at?: string
+          data?: string
+          forma?: Database["public"]["Enums"]["recuperacao_forma"]
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id: string
+          usuario?: string | null
+          valor?: number
+        }
+        Update: {
+          cobranca_id?: string | null
+          created_at?: string
+          data?: string
+          forma?: Database["public"]["Enums"]["recuperacao_forma"]
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id?: string
+          usuario?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recuperacoes_cobranca_id_fkey"
+            columns: ["cobranca_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recuperacoes_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recuperacoes_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
             referencedColumns: ["id"]
           },
         ]
