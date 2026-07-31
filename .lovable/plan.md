@@ -1,45 +1,76 @@
-## Situação atual
+## Diagnóstico do estado atual
 
-- `src/routes/_authenticated/dashboard.tsx` — página única, com 10 StatCards em grade, 4 gráficos Recharts e tabela Top 10. Consome `getDashboardStats` (server fn) via `useQuery` + `useTenant`.
-- Componentes próprios existentes: `RatingBadge`, `StatusManualBadge`, `AppSidebar`.
-- shadcn/ui disponível: card, button, avatar, badge, separator, scroll-area, progress, tooltip, skeleton, table, tabs, chart.
-- Tokens do Design System em `src/styles.css` (primary, accent, muted, chart-1..5, rating-*). Nada de cor hardcoded.
+**Tabelas existentes:** `lojas`, `profiles`, `user_roles`, `user_lojas`, `clientes`, `transacoes`, `alertas`, `ocorrencias`, `processamentos`, `rating_logs`.
 
-## O que será feito (apenas UI)
+**Pontos verificados**
+- RLS está ativo em todas as tabelas de negócio, com escopo por loja via `is_admin() OR user_has_loja(auth.uid(), loja_id)`. Porém as políticas estão concedidas ao papel `public` (deveriam ser `TO authenticated`) e `rating_logs` não possui `loja_id` próprio (depende de subquery em `clientes`).
+- `ocorrencias` hoje só tem: `tipo`, `descricao`, `data_ocorrencia`, `resolvida`, `numero_cartao`, `created_by`. Falta praticamente todo o ciclo operacional/financeiro pedido.
+- **Não existe** tabela de produtos, nem imagens, nem cobranças, nem recuperações, nem log de status, nem views de dashboard.
+- `ocorrencias` referencia cliente apenas por `numero_cartao` (texto), sem FK para `clientes` — origem de inconsistência e de queries lentas.
+- Dashboard (`src/lib/dashboard.functions.ts`) pagina **todas** as transações no servidor e soma em JavaScript: não escala. Deve virar agregação em SQL.
+- Storage: existe apenas o bucket privado `excel-uploads`.
+- Nada de mockado no banco; o mock atual está apenas na camada visual do Dashboard (produtos furtados, heatmap, IA recomenda) — esta Sprint cria a fonte de dados real para eles, sem tocar no layout.
 
-Nenhuma alteração em queries, server functions, hooks de dados, RLS, migrations ou backend. `getDashboardStats` permanece intocado e continua sendo a única fonte dos números reais.
+## Plano de execução (migrations pequenas e sequenciais)
 
-### Estrutura nova da página
+**M1 — Enums e domínios**
+- `ocorrencia_status`: Nova, Em análise, Comunicado ao Síndico, Comunicado ao RH, Negociação, Cobrança Enviada, Pagamento Recebido, Finalizada, Arquivada.
+- `ocorrencia_prioridade` (Baixa/Média/Alta/Crítica), `ocorrencia_origem` (Manual, Upload, Automática, Integração), `cobranca_status`, `recuperacao_forma`.
 
-1. **Topo**: cabeçalho com título, subtítulo e área de filtros (placeholder visual de período), melhor espaçamento. Seletor de loja permanece no header global (`_authenticated.tsx`), sem mudanças.
-2. **Linha 1** — 5 `MetricCard` com ícone, título, valor, variação % e sparkline:
-   - Faturamento do Dia, Compras do Dia, Ocorrências do Dia, Valores Recuperados, Taxa de Recuperação.
-   - Onde o dado existe (faturamento, alertas/ocorrências, séries `fatPorMes`/`alertasPorDia`) usa dado real; onde não existe, placeholder visual marcado como "—" com estrutura pronta para receber lógica.
-3. **Linha 2** — 3 colunas: `RecurringClientCard` (lista com avatar, nome, nº ocorrências, última ocorrência, horário — alimentada por `top10` como base visual + botão "Ver Todos" navegando para `/clientes`), card destaque **Valores Recuperados** (troféu, valor, texto), painel **Ações Rápidas** com 4 botões (WhatsApp, PDF, Enviar relatório, Nova ocorrência) — os dois primeiros/terceiro desabilitados com tooltip "em breve", "Nova ocorrência" navega para `/ocorrencias`.
-4. **Linha 3** — **Produtos Mais Furtados** (barras horizontais Recharts) e **Horários com Maior Incidência** (grade heatmap em CSS com tokens) — ambos estruturais.
-5. **Linha 4** — **IA Recomenda Hoje**: lista de 5 `RecommendationCard` com conteúdo de demonstração. Sem IA.
-6. **Linha 5** — **Ocorrências Recentes**: `RecentOccurrenceCard` horizontais (miniatura, status, descrição, loja, horário), estrutura visual.
-7. **Preservação**: os gráficos atuais (distribuição de ratings, evolução de faturamento, alertas por período, clientes por classificação) e a tabela Top 10 continuam na página, reorganizados em seção "Análise detalhada" — nada é removido.
+**M2 — Expansão de `ocorrencias`**
+- Novos campos: `status` (enum, default Nova), `status_data`, `status_usuario`, `valor_perdido`, `valor_recuperado`, `responsavel`, `data_cobranca`, `data_pagamento`, `data_resolucao`, `observacoes`, `origem`, `prioridade`, `tipo_ocorrencia`, `produto_principal`, `cliente_recorrente`, e `cliente_id` (FK para `clientes`).
+- Backfill: `status` derivado de `resolvida`; `cliente_id` resolvido por `(loja_id, numero_cartao)`. `resolvida` é mantida para não quebrar as telas atuais, sincronizada por trigger.
+- Índices: `(loja_id, status)`, `(loja_id, data_ocorrencia desc)`, `(cliente_id)`.
 
-### Arquivos
+**M3 — `ocorrencia_status_log`** + trigger que grava automaticamente toda mudança de status (anterior, novo, usuário, data/hora, observação) e atualiza `status_data`/`status_usuario`.
 
-Novos em `src/components/dashboard/`:
-- `SectionHeader.tsx`
-- `DashboardCard.tsx` (wrapper base de card com hover/sombra)
-- `MetricCard.tsx` (com sparkline embutido; cobre o papel de SparklineCard)
-- `QuickActionCard.tsx`
-- `RecurringClientCard.tsx`
-- `RecommendationCard.tsx`
-- `RecentOccurrenceCard.tsx`
+**M4 — `produtos` e `ocorrencia_produtos`**
+- `produtos` (por loja: nome, sku, categoria, valor_referencia).
+- `ocorrencia_produtos` (ocorrencia_id, produto_id, quantidade, valor) — relação N:N, base do gráfico "produtos mais furtados".
 
-Modificados:
-- `src/routes/_authenticated/dashboard.tsx` (composição da nova página + `head()` de SEO se ausente)
-- `src/styles.css` — apenas se for necessário adicionar tokens de sombra/gradiente suaves (sem trocar cores existentes)
+**M5 — `ocorrencia_imagens`** (storage_path, thumbnail, ordem, tipo). Apenas caminhos; binário sempre no Storage.
 
-### Responsividade
+**M6 — `cobrancas` e `recuperacoes`** com os campos solicitados; trigger que soma recuperações em `ocorrencias.valor_recuperado` e ajusta status/datas.
 
-Grades: 1 col (mobile) → 2 (tablet) → 3/5 (notebook/desktop). Hover suave, transições leves, sombras discretas via tokens.
+**M7 — Auditoria**
+- `audit_log` (tabela, registro_id, loja_id, acao, usuario, valor_anterior jsonb, valor_novo jsonb, created_at) + trigger genérico aplicado a `ocorrencias`, `cobrancas`, `recuperacoes`, `clientes`. Leitura restrita a admin/loja.
 
-### Preparado para próximas sprints
+**M8 — Views de leitura** (todas com `security_invoker`, respeitando RLS e aceitando filtros de loja/período/cliente/produto/status/operador/tipo):
+- `vw_clientes_recorrentes` — qtd de ocorrências, valor perdido, recuperado, primeira/última ocorrência, dias desde a última.
+- `dashboard_executivo`, `dashboard_financeiro`, `dashboard_produtos`, `dashboard_clientes`, `dashboard_ocorrencias`.
+- Funções SQL agregadoras para faturamento por mês e heatmap de horários (substituem a paginação em JS).
 
-Compras do Dia, Valores Recuperados, Taxa de Recuperação, Produtos Mais Furtados, Heatmap de horários, IA Recomenda, Ocorrências Recentes e as ações de cobrança/relatório ficam com props tipadas e placeholders — só faltará ligar os dados.
+**M9 — RLS e GRANTs**
+- Recriar as políticas de negócio como `TO authenticated`, mantendo exatamente a mesma regra de tenant.
+- Políticas de tenant para todas as tabelas novas (via `loja_id` próprio ou via `ocorrencia_id` → loja).
+- GRANTs explícitos para `authenticated`/`service_role` em toda tabela nova.
+
+**M10 — Storage:** criar buckets privados `ocorrencias`, `relatorios`, `pdfs`, `thumbnails`, com políticas exigindo prefixo `<loja_id>/` no caminho.
+
+## Camada de API (server functions, sem tocar no front)
+
+Novo `src/lib/dashboard/*.functions.ts` e `src/lib/ocorrencias/*.functions.ts`, todos autenticados e com filtros tipados por Zod:
+
+| Endpoint solicitado | Server function |
+| --- | --- |
+| GET /dashboard/executivo | `getDashboardExecutivo` |
+| GET /dashboard/clientes | `getDashboardClientes` |
+| GET /dashboard/produtos | `getDashboardProdutos` |
+| GET /dashboard/financeiro | `getDashboardFinanceiro` |
+| GET /dashboard/horarios | `getDashboardHorarios` |
+| GET /dashboard/recorrentes | `getClientesRecorrentes` |
+| GET /ocorrencias/:id | `getOcorrencia` |
+| GET /ocorrencias/:id/imagens | `getOcorrenciaImagens` |
+| PATCH /ocorrencias/status | `updateOcorrenciaStatus` |
+| POST /cobrancas | `createCobranca` |
+| POST /recuperacoes | `createRecuperacao` |
+
+`getDashboardStats` atual é mantido (para não quebrar o Dashboard) mas reescrito internamente sobre as views agregadas. Um `filters.ts` compartilhado padroniza loja/período/cliente/produto/status/operador/tipo, e um `queryKeys.ts` prepara o consumo com React Query e paginação — sem alterar componentes nesta Sprint.
+
+## Garantias
+
+- Zero alteração em layout, componentes, rotas visuais ou design.
+- `resolvida`, `rating_final`, `status_manual` e a engine HonestGuard continuam funcionando; o status manual permanece intocado pela engine.
+- Documentação final em `docs/SPRINT2-BACKEND.md` com tabelas, relacionamentos, migrations, endpoints, RLS, índices, views e melhorias futuras.
+
+Confirma para eu começar pela M1?

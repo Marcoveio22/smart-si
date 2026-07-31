@@ -54,6 +54,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "alertas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
+          },
+          {
             foreignKeyName: "alertas_loja_id_fkey"
             columns: ["loja_id"]
             isOneToOne: false
@@ -61,6 +68,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      audit_log: {
+        Row: {
+          acao: string
+          created_at: string
+          id: string
+          loja_id: string | null
+          registro_id: string | null
+          tabela: string
+          usuario: string | null
+          valor_anterior: Json | null
+          valor_novo: Json | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          registro_id?: string | null
+          tabela: string
+          usuario?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          registro_id?: string | null
+          tabela?: string
+          usuario?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Relationships: []
       }
       clientes: {
         Row: {
@@ -127,6 +170,103 @@ export type Database = {
           },
         ]
       }
+      cobrancas: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          data_envio: string | null
+          data_pagamento: string | null
+          forma_envio: string | null
+          id: string
+          loja_id: string | null
+          observacao: string | null
+          ocorrencia_id: string
+          pdf_url: string | null
+          status: Database["public"]["Enums"]["cobranca_status"]
+          updated_at: string
+          usuario: string | null
+          valor: number
+          whatsapp_enviado: boolean
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          data_envio?: string | null
+          data_pagamento?: string | null
+          forma_envio?: string | null
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id: string
+          pdf_url?: string | null
+          status?: Database["public"]["Enums"]["cobranca_status"]
+          updated_at?: string
+          usuario?: string | null
+          valor?: number
+          whatsapp_enviado?: boolean
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          data_envio?: string | null
+          data_pagamento?: string | null
+          forma_envio?: string | null
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id?: string
+          pdf_url?: string | null
+          status?: Database["public"]["Enums"]["cobranca_status"]
+          updated_at?: string
+          usuario?: string | null
+          valor?: number
+          whatsapp_enviado?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobrancas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "cobrancas_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_financeiro"
+            referencedColumns: ["ocorrencia_id"]
+          },
+          {
+            foreignKeyName: "cobrancas_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lojas: {
         Row: {
           ativo: boolean
@@ -157,44 +297,305 @@ export type Database = {
         }
         Relationships: []
       }
-      ocorrencias: {
+      ocorrencia_imagens: {
         Row: {
           created_at: string
+          id: string
+          loja_id: string | null
+          ocorrencia_id: string
+          ordem: number
+          storage_path: string
+          thumbnail: string | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          ocorrencia_id: string
+          ordem?: number
+          storage_path: string
+          thumbnail?: string | null
+          tipo?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          ocorrencia_id?: string
+          ordem?: number
+          storage_path?: string
+          thumbnail?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_imagens_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_imagens_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_financeiro"
+            referencedColumns: ["ocorrencia_id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_imagens_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_imagens_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_produtos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          loja_id: string | null
+          ocorrencia_id: string
+          produto_id: string | null
+          quantidade: number
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          loja_id?: string | null
+          ocorrencia_id: string
+          produto_id?: string | null
+          quantidade?: number
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          loja_id?: string | null
+          ocorrencia_id?: string
+          produto_id?: string | null
+          quantidade?: number
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_produtos_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_financeiro"
+            referencedColumns: ["ocorrencia_id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencia_status_log: {
+        Row: {
+          data_hora: string
+          id: string
+          loja_id: string | null
+          observacao: string | null
+          ocorrencia_id: string
+          status_anterior:
+            | Database["public"]["Enums"]["ocorrencia_status"]
+            | null
+          status_novo: Database["public"]["Enums"]["ocorrencia_status"]
+          usuario: string | null
+        }
+        Insert: {
+          data_hora?: string
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id: string
+          status_anterior?:
+            | Database["public"]["Enums"]["ocorrencia_status"]
+            | null
+          status_novo: Database["public"]["Enums"]["ocorrencia_status"]
+          usuario?: string | null
+        }
+        Update: {
+          data_hora?: string
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id?: string
+          status_anterior?:
+            | Database["public"]["Enums"]["ocorrencia_status"]
+            | null
+          status_novo?: Database["public"]["Enums"]["ocorrencia_status"]
+          usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_status_log_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_status_log_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_financeiro"
+            referencedColumns: ["ocorrencia_id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_status_log_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_status_log_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ocorrencias: {
+        Row: {
+          cliente_id: string | null
+          cliente_recorrente: boolean
+          created_at: string
           created_by: string | null
+          data_cobranca: string | null
           data_ocorrencia: string
+          data_pagamento: string | null
+          data_resolucao: string | null
           descricao: string | null
           id: string
           loja_id: string | null
           numero_cartao: string
+          observacoes: string | null
+          origem: Database["public"]["Enums"]["ocorrencia_origem"]
+          prioridade: Database["public"]["Enums"]["ocorrencia_prioridade"]
+          produto_principal: string | null
           resolvida: boolean
+          responsavel: string | null
+          status: Database["public"]["Enums"]["ocorrencia_status"]
+          status_data: string
+          status_usuario: string | null
           tipo: string
+          tipo_ocorrencia: string | null
           updated_at: string
+          valor_perdido: number
+          valor_recuperado: number
         }
         Insert: {
+          cliente_id?: string | null
+          cliente_recorrente?: boolean
           created_at?: string
           created_by?: string | null
+          data_cobranca?: string | null
           data_ocorrencia?: string
+          data_pagamento?: string | null
+          data_resolucao?: string | null
           descricao?: string | null
           id?: string
           loja_id?: string | null
           numero_cartao: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["ocorrencia_origem"]
+          prioridade?: Database["public"]["Enums"]["ocorrencia_prioridade"]
+          produto_principal?: string | null
           resolvida?: boolean
+          responsavel?: string | null
+          status?: Database["public"]["Enums"]["ocorrencia_status"]
+          status_data?: string
+          status_usuario?: string | null
           tipo: string
+          tipo_ocorrencia?: string | null
           updated_at?: string
+          valor_perdido?: number
+          valor_recuperado?: number
         }
         Update: {
+          cliente_id?: string | null
+          cliente_recorrente?: boolean
           created_at?: string
           created_by?: string | null
+          data_cobranca?: string | null
           data_ocorrencia?: string
+          data_pagamento?: string | null
+          data_resolucao?: string | null
           descricao?: string | null
           id?: string
           loja_id?: string | null
           numero_cartao?: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["ocorrencia_origem"]
+          prioridade?: Database["public"]["Enums"]["ocorrencia_prioridade"]
+          produto_principal?: string | null
           resolvida?: boolean
+          responsavel?: string | null
+          status?: Database["public"]["Enums"]["ocorrencia_status"]
+          status_data?: string
+          status_usuario?: string | null
           tipo?: string
+          tipo_ocorrencia?: string | null
           updated_at?: string
+          valor_perdido?: number
+          valor_recuperado?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
+          },
           {
             foreignKeyName: "ocorrencias_loja_id_fkey"
             columns: ["loja_id"]
@@ -278,6 +679,50 @@ export type Database = {
           },
         ]
       }
+      produtos: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          created_at: string
+          id: string
+          loja_id: string | null
+          nome: string
+          sku: string | null
+          updated_at: string
+          valor_referencia: number
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          nome: string
+          sku?: string | null
+          updated_at?: string
+          valor_referencia?: number
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          nome?: string
+          sku?: string | null
+          updated_at?: string
+          valor_referencia?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -315,6 +760,7 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           id: string
+          loja_id: string | null
           motivo: string | null
           rating_anterior: string | null
           rating_novo: string | null
@@ -323,6 +769,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           id?: string
+          loja_id?: string | null
           motivo?: string | null
           rating_anterior?: string | null
           rating_novo?: string | null
@@ -331,6 +778,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           id?: string
+          loja_id?: string | null
           motivo?: string | null
           rating_anterior?: string | null
           rating_novo?: string | null
@@ -341,6 +789,95 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rating_logs_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "rating_logs_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recuperacoes: {
+        Row: {
+          cobranca_id: string | null
+          created_at: string
+          data: string
+          forma: Database["public"]["Enums"]["recuperacao_forma"]
+          id: string
+          loja_id: string | null
+          observacao: string | null
+          ocorrencia_id: string
+          usuario: string | null
+          valor: number
+        }
+        Insert: {
+          cobranca_id?: string | null
+          created_at?: string
+          data?: string
+          forma?: Database["public"]["Enums"]["recuperacao_forma"]
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id: string
+          usuario?: string | null
+          valor?: number
+        }
+        Update: {
+          cobranca_id?: string | null
+          created_at?: string
+          data?: string
+          forma?: Database["public"]["Enums"]["recuperacao_forma"]
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id?: string
+          usuario?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recuperacoes_cobranca_id_fkey"
+            columns: ["cobranca_id"]
+            isOneToOne: false
+            referencedRelation: "cobrancas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recuperacoes_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recuperacoes_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_financeiro"
+            referencedColumns: ["ocorrencia_id"]
+          },
+          {
+            foreignKeyName: "recuperacoes_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recuperacoes_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
             referencedColumns: ["id"]
           },
         ]
@@ -383,6 +920,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "transacoes_loja_id_fkey"
@@ -442,7 +986,262 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dashboard_clientes: {
+        Row: {
+          cliente_id: string | null
+          dias_desde_ultima: number | null
+          is_trusted: boolean | null
+          loja_id: string | null
+          numero_cartao: string | null
+          primeira_ocorrencia: string | null
+          rating_final: string | null
+          score_confianca: number | null
+          status_manual: string | null
+          total_compras: number | null
+          total_gasto: number | null
+          total_ocorrencias: number | null
+          ultima_compra: string | null
+          ultima_ocorrencia: string | null
+          valor_perdido: number | null
+          valor_recuperado: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_executivo: {
+        Row: {
+          clientes_envolvidos: number | null
+          dia: string | null
+          loja_id: string | null
+          ocorrencias_abertas: number | null
+          ocorrencias_finalizadas: number | null
+          total_ocorrencias: number | null
+          valor_perdido: number | null
+          valor_recuperado: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_financeiro: {
+        Row: {
+          cliente_id: string | null
+          data_ocorrencia: string | null
+          loja_id: string | null
+          mes: string | null
+          ocorrencia_id: string | null
+          qtd_cobrancas: number | null
+          qtd_recuperacoes: number | null
+          status: Database["public"]["Enums"]["ocorrencia_status"] | null
+          total_cobrado: number | null
+          ultima_cobranca: string | null
+          ultima_recuperacao: string | null
+          valor_pendente: number | null
+          valor_perdido: number | null
+          valor_recuperado: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_ocorrencias: {
+        Row: {
+          cliente_id: string | null
+          cliente_recorrente: boolean | null
+          created_by: string | null
+          data_cobranca: string | null
+          data_ocorrencia: string | null
+          data_pagamento: string | null
+          data_resolucao: string | null
+          descricao: string | null
+          dia: string | null
+          dia_semana: number | null
+          hora: number | null
+          id: string | null
+          loja_id: string | null
+          loja_nome: string | null
+          mes: string | null
+          numero_cartao: string | null
+          observacoes: string | null
+          origem: Database["public"]["Enums"]["ocorrencia_origem"] | null
+          prioridade:
+            | Database["public"]["Enums"]["ocorrencia_prioridade"]
+            | null
+          produto_principal: string | null
+          rating_final: string | null
+          responsavel: string | null
+          status: Database["public"]["Enums"]["ocorrencia_status"] | null
+          status_data: string | null
+          status_manual: string | null
+          status_usuario: string | null
+          tipo_ocorrencia: string | null
+          valor_pendente: number | null
+          valor_perdido: number | null
+          valor_recuperado: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_produtos: {
+        Row: {
+          categoria: string | null
+          cliente_id: string | null
+          data_ocorrencia: string | null
+          id: string | null
+          loja_id: string | null
+          mes: string | null
+          ocorrencia_id: string | null
+          produto_id: string | null
+          produto_nome: string | null
+          quantidade: number | null
+          status: Database["public"]["Enums"]["ocorrencia_status"] | null
+          valor: number | null
+          valor_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_produtos_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_financeiro"
+            referencedColumns: ["ocorrencia_id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
+          },
+        ]
+      }
+      vw_clientes_recorrentes: {
+        Row: {
+          cliente_id: string | null
+          dias_desde_ultima: number | null
+          loja_id: string | null
+          numero_cartao: string | null
+          primeira_ocorrencia: string | null
+          rating_final: string | null
+          status_manual: string | null
+          total_ocorrencias: number | null
+          ultima_ocorrencia: string | null
+          valor_perdido: number | null
+          valor_recuperado: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "dashboard_clientes"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_set_user_lojas: {
@@ -451,6 +1250,27 @@ export type Database = {
       }
       bootstrap_admin_self: { Args: never; Returns: boolean }
       current_loja_id: { Args: never; Returns: string }
+      dashboard_horarios: {
+        Args: { _from?: string; _loja_id?: string; _to?: string }
+        Returns: {
+          dia_semana: number
+          hora: number
+          total: number
+          valor: number
+        }[]
+      }
+      faturamento_por_mes: {
+        Args: { _from?: string; _loja_id?: string; _to?: string }
+        Returns: {
+          mes: string
+          total: number
+          transacoes: number
+        }[]
+      }
+      faturamento_total: {
+        Args: { _from?: string; _loja_id?: string; _to?: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -466,6 +1286,31 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "manager" | "user"
+      cobranca_status:
+        | "Pendente"
+        | "Enviada"
+        | "Negociada"
+        | "Paga"
+        | "Cancelada"
+      ocorrencia_origem: "Manual" | "Upload" | "Automática" | "Integração"
+      ocorrencia_prioridade: "Baixa" | "Média" | "Alta" | "Crítica"
+      ocorrencia_status:
+        | "Nova"
+        | "Em análise"
+        | "Comunicado ao Síndico"
+        | "Comunicado ao RH"
+        | "Negociação"
+        | "Cobrança Enviada"
+        | "Pagamento Recebido"
+        | "Finalizada"
+        | "Arquivada"
+      recuperacao_forma:
+        | "PIX"
+        | "Dinheiro"
+        | "Cartão"
+        | "Boleto"
+        | "Desconto em folha"
+        | "Outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -594,6 +1439,34 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "manager", "user"],
+      cobranca_status: [
+        "Pendente",
+        "Enviada",
+        "Negociada",
+        "Paga",
+        "Cancelada",
+      ],
+      ocorrencia_origem: ["Manual", "Upload", "Automática", "Integração"],
+      ocorrencia_prioridade: ["Baixa", "Média", "Alta", "Crítica"],
+      ocorrencia_status: [
+        "Nova",
+        "Em análise",
+        "Comunicado ao Síndico",
+        "Comunicado ao RH",
+        "Negociação",
+        "Cobrança Enviada",
+        "Pagamento Recebido",
+        "Finalizada",
+        "Arquivada",
+      ],
+      recuperacao_forma: [
+        "PIX",
+        "Dinheiro",
+        "Cartão",
+        "Boleto",
+        "Desconto em folha",
+        "Outro",
+      ],
     },
   },
 } as const
