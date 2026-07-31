@@ -62,6 +62,42 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          acao: string
+          created_at: string
+          id: string
+          loja_id: string | null
+          registro_id: string | null
+          tabela: string
+          usuario: string | null
+          valor_anterior: Json | null
+          valor_novo: Json | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          registro_id?: string | null
+          tabela: string
+          usuario?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          registro_id?: string | null
+          tabela?: string
+          usuario?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           created_at: string
