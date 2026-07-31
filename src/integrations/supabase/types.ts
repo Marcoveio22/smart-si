@@ -157,6 +157,61 @@ export type Database = {
         }
         Relationships: []
       }
+      ocorrencia_produtos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          loja_id: string | null
+          ocorrencia_id: string
+          produto_id: string | null
+          quantidade: number
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          loja_id?: string | null
+          ocorrencia_id: string
+          produto_id?: string | null
+          quantidade?: number
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          loja_id?: string | null
+          ocorrencia_id?: string
+          produto_id?: string | null
+          quantidade?: number
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_produtos_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_produtos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocorrencia_status_log: {
         Row: {
           data_hora: string
@@ -380,6 +435,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "processamentos_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          created_at: string
+          id: string
+          loja_id: string | null
+          nome: string
+          sku: string | null
+          updated_at: string
+          valor_referencia: number
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          nome: string
+          sku?: string | null
+          updated_at?: string
+          valor_referencia?: number
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          nome?: string
+          sku?: string | null
+          updated_at?: string
+          valor_referencia?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_loja_id_fkey"
             columns: ["loja_id"]
             isOneToOne: false
             referencedRelation: "lojas"
