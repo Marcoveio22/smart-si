@@ -760,6 +760,7 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           id: string
+          loja_id: string | null
           motivo: string | null
           rating_anterior: string | null
           rating_novo: string | null
@@ -768,6 +769,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           id?: string
+          loja_id?: string | null
           motivo?: string | null
           rating_anterior?: string | null
           rating_novo?: string | null
@@ -776,6 +778,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           id?: string
+          loja_id?: string | null
           motivo?: string | null
           rating_anterior?: string | null
           rating_novo?: string | null
@@ -794,6 +797,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "dashboard_clientes"
             referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "rating_logs_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
           },
         ]
       }
