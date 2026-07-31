@@ -157,6 +157,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ocorrencia_imagens: {
+        Row: {
+          created_at: string
+          id: string
+          loja_id: string | null
+          ocorrencia_id: string
+          ordem: number
+          storage_path: string
+          thumbnail: string | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          ocorrencia_id: string
+          ordem?: number
+          storage_path: string
+          thumbnail?: string | null
+          tipo?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          loja_id?: string | null
+          ocorrencia_id?: string
+          ordem?: number
+          storage_path?: string
+          thumbnail?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_imagens_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_imagens_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocorrencia_produtos: {
         Row: {
           created_at: string
