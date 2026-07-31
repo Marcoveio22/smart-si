@@ -1,15 +1,41 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getDashboardStats } from "@/lib/dashboard.functions";
 import { useTenant } from "@/hooks/useTenant";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { RatingBadge } from "@/components/RatingBadge";
 import { StatusManualBadge } from "@/components/StatusManualBadge";
-import { Users, ShieldCheck, Gem, Crown, Award, AlertOctagon, BellRing, DollarSign, Flag, Circle, Loader2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
+import { DashboardCard } from "@/components/dashboard/DashboardCard";
+import { MetricCard } from "@/components/dashboard/MetricCard";
+import { SectionHeader } from "@/components/dashboard/SectionHeader";
+import { QuickActionCard, type QuickAction } from "@/components/dashboard/QuickActionCard";
+import { RecurringClientCard, type RecurringClient } from "@/components/dashboard/RecurringClientCard";
+import { RecommendationCard, type Recommendation } from "@/components/dashboard/RecommendationCard";
+import { RecentOccurrenceCard, type RecentOccurrence } from "@/components/dashboard/RecentOccurrenceCard";
+import {
+  Users, ShieldCheck, Gem, Crown, Award, AlertOctagon, BellRing, DollarSign, Flag, Circle, Loader2,
+  ShoppingCart, Trophy, Percent, MessageCircle, FileText, Send, PlusCircle, Sparkles, Brain,
+  TrendingUp, Clock, PackageSearch, CalendarRange, ArrowRight,
+} from "lucide-react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid,
+} from "recharts";
 
-export const Route = createFileRoute("/_authenticated/dashboard")({ component: Dashboard });
+export const Route = createFileRoute("/_authenticated/dashboard")({
+  head: () => ({
+    meta: [
+      { title: "Dashboard Executivo — SMART SI Monitoramento" },
+      { name: "description", content: "Indicadores operacionais, ocorrências e recuperação de valores dos minimercados autônomos." },
+      { property: "og:title", content: "Dashboard Executivo — SMART SI Monitoramento" },
+      { property: "og:description", content: "Indicadores operacionais, ocorrências e recuperação de valores em tempo real." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: Dashboard,
+});
 
 const RATING_COLORS: Record<string, string> = {
   DIAMOND: "var(--rating-diamond)",
@@ -19,21 +45,37 @@ const RATING_COLORS: Record<string, string> = {
   TRUSTED: "var(--rating-trusted)",
 };
 
-function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string | number; accent?: string }) {
-  return (
-    <Card>
-      <CardContent className="p-5 flex items-center justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-          <div className="text-2xl font-bold mt-1">{value}</div>
-        </div>
-        <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ background: accent ? `color-mix(in oklab, ${accent} 18%, transparent)` : "var(--muted)", color: accent ?? "var(--primary)" }}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/* ---------- Conteúdo estrutural (aguardando lógica nas próximas sprints) ---------- */
+
+const PRODUTOS_FURTADOS = [
+  { produto: "Energético 473ml", total: 18 },
+  { produto: "Chocolate barra", total: 14 },
+  { produto: "Cerveja lata", total: 11 },
+  { produto: "Salgadinho 100g", total: 9 },
+  { produto: "Café cápsula", total: 6 },
+];
+
+const HORAS = ["00", "03", "06", "09", "12", "15", "18", "21"];
+const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+const RECOMENDACOES: Recommendation[] = [
+  { id: "1", titulo: "Revisar 3 clientes RED com compras acima da média", detalhe: "Padrão de valor divergente nas últimas 48h", prioridade: "alta", icon: AlertOctagon },
+  { id: "2", titulo: "Enviar cobrança pendente de ocorrências abertas", detalhe: "Ocorrências sem tratativa há mais de 5 dias", prioridade: "alta", icon: Send },
+  { id: "3", titulo: "Reforçar reposição no horário de pico (18h–21h)", detalhe: "Maior incidência de ocorrências no período", prioridade: "media", icon: Clock },
+  { id: "4", titulo: "Promover 4 clientes SILVER para GOLD", detalhe: "Recorrência e ticket médio acima do percentil 75", prioridade: "media", icon: TrendingUp },
+  { id: "5", titulo: "Auditar produtos com maior perda", detalhe: "Concentração de perdas em 5 SKUs", prioridade: "baixa", icon: PackageSearch },
+];
+
+const OCORRENCIAS_RECENTES: RecentOccurrence[] = [
+  { id: "1", descricao: "Diferença de valor na conferência do caixa", status: "Em análise", loja: "Loja Principal", horario: "há 12 min", statusTone: "atencao" },
+  { id: "2", descricao: "Produto retirado sem registro de compra", status: "Crítico", loja: "POINT VILA YARA", horario: "há 48 min", statusTone: "critico" },
+  { id: "3", descricao: "Cobrança recuperada com sucesso", status: "Resolvido", loja: "My Helbor", horario: "há 2 h", statusTone: "ok" },
+  { id: "4", descricao: "Cartão com uso atípico em múltiplos horários", status: "Em análise", loja: "CONDOMINIO BELA VISTA", horario: "há 3 h", statusTone: "atencao" },
+];
+
+/* ---------------------------------- Página ---------------------------------- */
 
 function Dashboard() {
   const fetchStats = useServerFn(getDashboardStats);
@@ -45,36 +87,233 @@ function Dashboard() {
   });
 
   if (isLoading || !data) {
-    return <div className="flex items-center justify-center h-64 text-muted-foreground"><Loader2 className="h-5 w-5 mr-2 animate-spin" />Carregando dados do banco...</div>;
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground">
+        <Loader2 className="h-5 w-5 mr-2 animate-spin" />Carregando dados do banco...
+      </div>
+    );
   }
 
   const { totalClientes, byRating, byStatusManual, alertasAtivos, faturamentoTotal, fatPorMes, alertasPorDia, top10 } = data;
   const pieData = ["DIAMOND", "GOLD", "SILVER", "RED", "TRUSTED"].map((r) => ({ name: r, value: byRating[r] ?? 0 }));
 
+  const fatSeries = fatPorMes.map((m: any) => Number(m.total) || 0);
+  const alertaSeries = alertasPorDia.map((a: any) => Number(a.total) || 0);
+  const deltaFat =
+    fatSeries.length > 1 && fatSeries[fatSeries.length - 2] > 0
+      ? ((fatSeries[fatSeries.length - 1] - fatSeries[fatSeries.length - 2]) / fatSeries[fatSeries.length - 2]) * 100
+      : null;
+  const deltaAlertas =
+    alertaSeries.length > 1 && alertaSeries[alertaSeries.length - 2] > 0
+      ? ((alertaSeries[alertaSeries.length - 1] - alertaSeries[alertaSeries.length - 2]) / alertaSeries[alertaSeries.length - 2]) * 100
+      : null;
+
+  const recorrentes: RecurringClient[] = (top10 as any[]).slice(0, 5).map((c) => ({
+    id: c.numero_cartao,
+    nome: c.numero_cartao,
+    ocorrencias: c.total_compras,
+    ultimaOcorrencia: `Rating ${c.rating_final ?? "—"} · ${brl(Number(c.total_gasto) || 0)}`,
+    horario: "—",
+  }));
+
+  const quickActions: QuickAction[] = [
+    { icon: MessageCircle, label: "Gerar cobrança via WhatsApp", disabled: true, hint: "Disponível na próxima sprint" },
+    { icon: FileText, label: "Gerar cobrança PDF", disabled: true, hint: "Disponível na próxima sprint" },
+    { icon: Send, label: "Enviar relatório", disabled: true, hint: "Disponível na próxima sprint" },
+    { icon: PlusCircle, label: "Nova ocorrência", hint: "Abrir tela de ocorrências" },
+  ];
+
+  const maxProduto = Math.max(...PRODUTOS_FURTADOS.map((p) => p.total));
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Visão geral da operação — dados em tempo real do banco</p>
-      </div>
+    <div className="space-y-8">
+      {/* Topo */}
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-bold tracking-tight">Dashboard Executivo</h1>
+          <p className="text-sm text-muted-foreground truncate">
+            Visão geral da operação — dados em tempo real do banco
+          </p>
+        </div>
+        <div className="shrink-0 flex items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-2" disabled title="Filtro de período — próxima sprint">
+            <CalendarRange className="h-4 w-4" />
+            <span className="hidden sm:inline">Hoje</span>
+          </Button>
+        </div>
+      </header>
 
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        <StatCard icon={Users} label="Total de Clientes" value={totalClientes.toLocaleString("pt-BR")} />
-        <StatCard icon={ShieldCheck} label="Status: TRUSTED" value={byStatusManual.TRUSTED ?? 0} accent="var(--rating-trusted)" />
-        <StatCard icon={Circle} label="Status: NEUTRO" value={byStatusManual.NEUTRO ?? 0} />
-        <StatCard icon={Flag} label="Status: RED FLAG" value={byStatusManual.RED_FLAG ?? 0} accent="var(--rating-red)" />
-        <StatCard icon={Gem} label="DIAMOND" value={byRating.DIAMOND ?? 0} accent="var(--rating-diamond)" />
-        <StatCard icon={Crown} label="GOLD" value={byRating.GOLD ?? 0} accent="var(--rating-gold)" />
-        <StatCard icon={Award} label="SILVER" value={byRating.SILVER ?? 0} accent="var(--rating-silver)" />
-        <StatCard icon={AlertOctagon} label="RED" value={byRating.RED ?? 0} accent="var(--rating-red)" />
-        <StatCard icon={BellRing} label="Alertas Ativos" value={alertasAtivos} accent="var(--destructive)" />
-        <StatCard icon={DollarSign} label="Faturamento Total" value={faturamentoTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} accent="var(--rating-trusted)" />
-      </div>
+      {/* Linha 1 — indicadores */}
+      <section>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <MetricCard
+            icon={DollarSign} label="Faturamento do Dia" value={brl(faturamentoTotal)}
+            delta={deltaFat} series={fatSeries} accent="var(--rating-trusted)" hint="acumulado do período"
+          />
+          <MetricCard
+            icon={ShoppingCart} label="Compras do Dia" value={totalClientes.toLocaleString("pt-BR")}
+            delta={null} series={fatSeries} accent="var(--chart-1)" hint="base de clientes ativos"
+          />
+          <MetricCard
+            icon={BellRing} label="Ocorrências do Dia" value={alertasAtivos}
+            delta={deltaAlertas} series={alertaSeries} accent="var(--destructive)" hint="alertas ativos"
+          />
+          <MetricCard
+            icon={Trophy} label="Valores Recuperados" value="—"
+            delta={null} accent="var(--rating-gold)" hint="aguardando integração"
+          />
+          <MetricCard
+            icon={Percent} label="Taxa de Recuperação" value="—"
+            delta={null} accent="var(--accent)" hint="aguardando integração"
+          />
+        </div>
+      </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Distribuição de Ratings</CardTitle></CardHeader>
-          <CardContent style={{ height: 260 }}>
+      {/* Linha 2 — 3 colunas */}
+      <section className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        <DashboardCard
+          title="Clientes Recorrentes Identificados Hoje"
+          icon={Users}
+          action={
+            <Button asChild variant="ghost" size="sm" className="gap-1 text-xs">
+              <Link to="/clientes">Ver Todos <ArrowRight className="h-3 w-3" /></Link>
+            </Button>
+          }
+        >
+          <div className="space-y-1">
+            {recorrentes.map((c) => <RecurringClientCard key={c.id} client={c} />)}
+            {!recorrentes.length && (
+              <div className="py-8 text-center text-sm text-muted-foreground">Sem clientes identificados</div>
+            )}
+          </div>
+        </DashboardCard>
+
+        <Card className="border-border/70 shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden">
+          <CardContent
+            className="p-6 h-full flex flex-col items-center justify-center text-center gap-3"
+            style={{
+              background:
+                "linear-gradient(160deg, color-mix(in oklab, var(--rating-gold) 14%, transparent), color-mix(in oklab, var(--primary) 8%, transparent))",
+            }}
+          >
+            <span
+              className="grid h-14 w-14 place-items-center rounded-full"
+              style={{ background: "color-mix(in oklab, var(--rating-gold) 25%, transparent)", color: "var(--rating-gold)" }}
+            >
+              <Trophy className="h-7 w-7" />
+            </span>
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valores Recuperados</div>
+            <div className="text-3xl font-bold">—</div>
+            <p className="max-w-[26ch] text-xs text-muted-foreground">
+              Total recuperado a partir das ocorrências tratadas. Painel preparado para receber os dados de recuperação.
+            </p>
+          </CardContent>
+        </Card>
+
+        <DashboardCard title="Ações Rápidas" icon={Sparkles}>
+          <div className="grid gap-2">
+            {quickActions.map((a) =>
+              a.label === "Nova ocorrência" ? (
+                <Link key={a.label} to="/ocorrencias" className="block">
+                  <QuickActionCard action={a} />
+                </Link>
+              ) : (
+                <QuickActionCard key={a.label} action={a} />
+              ),
+            )}
+          </div>
+        </DashboardCard>
+      </section>
+
+      {/* Linha 3 — gráficos estruturais */}
+      <section className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <DashboardCard title="Produtos Mais Furtados" icon={PackageSearch} contentClassName="h-[280px]">
+          <ResponsiveContainer>
+            <BarChart data={PRODUTOS_FURTADOS} layout="vertical" margin={{ left: 8, right: 16 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
+              <XAxis type="number" fontSize={11} />
+              <YAxis type="category" dataKey="produto" width={110} fontSize={11} />
+              <Tooltip />
+              <Bar dataKey="total" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+        </DashboardCard>
+
+        <DashboardCard title="Horários com Maior Incidência" icon={Clock}>
+          <div className="space-y-2">
+            <div className="grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-1 items-center">
+              <div />
+              {HORAS.map((h) => (
+                <div key={h} className="text-center text-[10px] text-muted-foreground">{h}h</div>
+              ))}
+              {DIAS.map((d, di) => (
+                <div key={d} className="contents">
+                  <div className="pr-1 text-[10px] text-muted-foreground">{d}</div>
+                  {HORAS.map((h, hi) => {
+                    const intensity = ((di * 3 + hi * 2) % 5) / 4;
+                    return (
+                      <div
+                        key={h}
+                        className="aspect-square rounded-sm transition-transform duration-200 hover:scale-110"
+                        style={{ background: `color-mix(in oklab, var(--chart-5) ${10 + intensity * 70}%, var(--muted))` }}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Estrutura visual — cálculo de incidência por faixa horária será ligado na próxima sprint.
+            </p>
+          </div>
+        </DashboardCard>
+      </section>
+
+      {/* Linha 4 — IA */}
+      <section>
+        <DashboardCard title="IA Recomenda Hoje" icon={Brain}>
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-1">
+            {RECOMENDACOES.map((r) => <RecommendationCard key={r.id} item={r} />)}
+          </div>
+        </DashboardCard>
+      </section>
+
+      {/* Linha 5 — ocorrências recentes */}
+      <section>
+        <DashboardCard
+          title="Ocorrências Recentes"
+          icon={BellRing}
+          action={
+            <Button asChild variant="ghost" size="sm" className="gap-1 text-xs">
+              <Link to="/ocorrencias">Ver Todas <ArrowRight className="h-3 w-3" /></Link>
+            </Button>
+          }
+        >
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {OCORRENCIAS_RECENTES.map((o) => <RecentOccurrenceCard key={o.id} item={o} />)}
+          </div>
+        </DashboardCard>
+      </section>
+
+      {/* Análise detalhada — conteúdo original preservado */}
+      <section>
+        <SectionHeader title="Análise detalhada" description="Indicadores completos da base de clientes" />
+
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+          <MiniStat icon={Users} label="Total de Clientes" value={totalClientes.toLocaleString("pt-BR")} />
+          <MiniStat icon={ShieldCheck} label="TRUSTED" value={byStatusManual.TRUSTED ?? 0} accent="var(--rating-trusted)" />
+          <MiniStat icon={Circle} label="NEUTRO" value={byStatusManual.NEUTRO ?? 0} />
+          <MiniStat icon={Flag} label="RED FLAG" value={byStatusManual.RED_FLAG ?? 0} accent="var(--rating-red)" />
+          <MiniStat icon={Gem} label="DIAMOND" value={byRating.DIAMOND ?? 0} accent="var(--rating-diamond)" />
+          <MiniStat icon={Crown} label="GOLD" value={byRating.GOLD ?? 0} accent="var(--rating-gold)" />
+          <MiniStat icon={Award} label="SILVER" value={byRating.SILVER ?? 0} accent="var(--rating-silver)" />
+          <MiniStat icon={AlertOctagon} label="RED" value={byRating.RED ?? 0} accent="var(--rating-red)" />
+          <MiniStat icon={BellRing} label="Alertas Ativos" value={alertasAtivos} accent="var(--destructive)" />
+          <MiniStat icon={DollarSign} label="Faturamento Total" value={brl(faturamentoTotal)} accent="var(--rating-trusted)" />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2 mt-4">
+          <DashboardCard title="Distribuição de Ratings" contentClassName="h-[260px]">
             <ResponsiveContainer>
               <PieChart>
                 <Pie data={pieData} dataKey="value" nameKey="name" innerRadius={50} outerRadius={90} paddingAngle={2}>
@@ -83,27 +322,21 @@ function Dashboard() {
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </DashboardCard>
 
-        <Card>
-          <CardHeader><CardTitle className="text-base">Evolução de Faturamento</CardTitle></CardHeader>
-          <CardContent style={{ height: 260 }}>
+          <DashboardCard title="Evolução de Faturamento" contentClassName="h-[260px]">
             <ResponsiveContainer>
               <LineChart data={fatPorMes}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                 <XAxis dataKey="mes" fontSize={12} />
                 <YAxis fontSize={12} />
-                <Tooltip formatter={(v: any) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} />
+                <Tooltip formatter={(v: any) => brl(Number(v))} />
                 <Line type="monotone" dataKey="total" stroke="var(--chart-1)" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </DashboardCard>
 
-        <Card>
-          <CardHeader><CardTitle className="text-base">Alertas por Período</CardTitle></CardHeader>
-          <CardContent style={{ height: 260 }}>
+          <DashboardCard title="Alertas por Período" contentClassName="h-[260px]">
             <ResponsiveContainer>
               <BarChart data={alertasPorDia}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -113,12 +346,9 @@ function Dashboard() {
                 <Bar dataKey="total" fill="var(--chart-5)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </DashboardCard>
 
-        <Card>
-          <CardHeader><CardTitle className="text-base">Clientes por Classificação</CardTitle></CardHeader>
-          <CardContent style={{ height: 260 }}>
+          <DashboardCard title="Clientes por Classificação" contentClassName="h-[260px]">
             <ResponsiveContainer>
               <BarChart data={pieData}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
@@ -130,35 +360,61 @@ function Dashboard() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+          </DashboardCard>
+        </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Top 10 Clientes por Compras</CardTitle></CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase text-muted-foreground border-b">
-                <tr><th className="py-2">#</th><th>Cartão</th><th>Rating</th><th>Status Manual</th><th className="text-right">Compras</th><th className="text-right">Gasto</th></tr>
-              </thead>
-              <tbody>
-                {top10.map((c: any, i: number) => (
-                  <tr key={c.numero_cartao} className="border-b border-border/50">
-                    <td className="py-2 text-muted-foreground">{i + 1}</td>
-                    <td className="font-mono">{c.numero_cartao}</td>
-                    <td><RatingBadge rating={c.rating_final} /></td>
-                    <td><StatusManualBadge status={c.status_manual} /></td>
-                    <td className="text-right">{c.total_compras}</td>
-                    <td className="text-right font-semibold">{Number(c.total_gasto).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td>
+        <div className="mt-4">
+          <DashboardCard title="Top 10 Clientes por Compras">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-left text-xs uppercase text-muted-foreground border-b">
+                  <tr>
+                    <th className="py-2">#</th><th>Cartão</th><th>Rating</th><th>Status Manual</th>
+                    <th className="text-right">Compras</th><th className="text-right">Gasto</th>
                   </tr>
-                ))}
-                {!top10.length && <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Sem dados</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {(top10 as any[]).map((c, i) => (
+                    <tr key={c.numero_cartao} className="border-b border-border/50 transition-colors hover:bg-muted/50">
+                      <td className="py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="font-mono">{c.numero_cartao}</td>
+                      <td><RatingBadge rating={c.rating_final} /></td>
+                      <td><StatusManualBadge status={c.status_manual} /></td>
+                      <td className="text-right">{c.total_compras}</td>
+                      <td className="text-right font-semibold">{brl(Number(c.total_gasto) || 0)}</td>
+                    </tr>
+                  ))}
+                  {!top10.length && (
+                    <tr><td colSpan={6} className="text-center py-8 text-muted-foreground">Sem dados</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </DashboardCard>
+        </div>
+      </section>
     </div>
+  );
+}
+
+function MiniStat({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string | number; accent?: string }) {
+  return (
+    <Card className="border-border/70 shadow-sm transition-all duration-200 hover:shadow-md">
+      <CardContent className="p-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{label}</div>
+          <div className="text-lg font-bold mt-0.5 truncate">{value}</div>
+        </div>
+        <div
+          className="h-8 w-8 shrink-0 rounded-lg flex items-center justify-center"
+          style={{
+            background: accent ? `color-mix(in oklab, ${accent} 16%, transparent)` : "var(--muted)",
+            color: accent ?? "var(--primary)",
+          }}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
