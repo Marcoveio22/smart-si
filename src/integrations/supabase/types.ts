@@ -157,6 +157,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ocorrencia_status_log: {
+        Row: {
+          data_hora: string
+          id: string
+          loja_id: string | null
+          observacao: string | null
+          ocorrencia_id: string
+          status_anterior:
+            | Database["public"]["Enums"]["ocorrencia_status"]
+            | null
+          status_novo: Database["public"]["Enums"]["ocorrencia_status"]
+          usuario: string | null
+        }
+        Insert: {
+          data_hora?: string
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id: string
+          status_anterior?:
+            | Database["public"]["Enums"]["ocorrencia_status"]
+            | null
+          status_novo: Database["public"]["Enums"]["ocorrencia_status"]
+          usuario?: string | null
+        }
+        Update: {
+          data_hora?: string
+          id?: string
+          loja_id?: string | null
+          observacao?: string | null
+          ocorrencia_id?: string
+          status_anterior?:
+            | Database["public"]["Enums"]["ocorrencia_status"]
+            | null
+          status_novo?: Database["public"]["Enums"]["ocorrencia_status"]
+          usuario?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencia_status_log_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: false
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencia_status_log_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ocorrencias: {
         Row: {
           cliente_id: string | null
