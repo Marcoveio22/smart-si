@@ -32,25 +32,17 @@ export const getDashboardStats = createServerFn({ method: "POST" })
         .order("total_gasto", { ascending: false }).limit(10),
     );
 
-    // Aggregate transactions in pages
-    let from = 0; const page = 1000;
-    let faturamentoTotal = 0;
-    const fatPorMes = new Map<string, number>();
-    while (true) {
-      const q = scope(supabase.from("transacoes").select("valor, data_transacao").range(from, from + page - 1));
-      const { data: rows, error } = await q;
-      if (error) throw error;
-      if (!rows?.length) break;
-      for (const t of rows) {
-        const v = Number((t as any).valor) || 0;
-        faturamentoTotal += v;
-        const d = new Date((t as any).data_transacao);
-        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        fatPorMes.set(k, (fatPorMes.get(k) ?? 0) + v);
-      }
-      if (rows.length < page) break;
-      from += page;
-    }
+    // Faturamento agregado no banco (sem paginar transações na aplicação)
+    const [{ data: fatTotal, error: fatErr }, { data: fatMeses, error: mesErr }] = await Promise.all([
+      supabase.rpc("faturamento_total", { _loja_id: lojaFilter ?? undefined }),
+      supabase.rpc("faturamento_por_mes", { _loja_id: lojaFilter ?? undefined }),
+    ]);
+    if (fatErr) throw fatErr;
+    if (mesErr) throw mesErr;
+    const faturamentoTotal = Number(fatTotal ?? 0);
+    const fatPorMes = new Map<string, number>(
+      (fatMeses ?? []).map((r: any) => [String(r.mes), Number(r.total ?? 0)] as const),
+    );
 
     const [ratingCounts, statusCounts, totalClientes, alertas, top10] =
       await Promise.all([ratingCountsP, statusCountsP, totalClientesP, alertasAtivosP, top10P]);
