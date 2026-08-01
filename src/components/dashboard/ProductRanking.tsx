@@ -51,9 +51,10 @@ export function ProductRanking({
             { key: "produto", header: "Produto" },
             { key: "categoria", header: "Categoria" },
             { key: "quantidade", header: "Quantidade" },
-            { key: "percentual", header: "Percentual", format: (v) => pct(Number(v)) },
-            { key: "valorPerdido", header: "Valor perdido", format: (v) => brl(Number(v)) },
-            { key: "valorRecuperado", header: "Valor recuperado", format: (v) => brl(Number(v)) },
+            { key: "percentual", header: "Percentual", format: (v: unknown) => pct(Number(v)) },
+            { key: "valorPerdido", header: "Valor perdido", format: (v: unknown) => brl(Number(v)) },
+            { key: "valorRecuperado", header: "Valor recuperado", format: (v: unknown) => brl(Number(v)) },
+
           ]}
         />
       }
