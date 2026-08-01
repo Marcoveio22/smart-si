@@ -21,13 +21,12 @@ import { StatusManualBadge } from "@/components/StatusManualBadge";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { SectionHeader } from "@/components/dashboard/SectionHeader";
-import { QuickActionCard, type QuickAction } from "@/components/dashboard/QuickActionCard";
 import { RecurringClientCard, type RecurringClient } from "@/components/dashboard/RecurringClientCard";
 import { RecommendationCard, type Recommendation } from "@/components/dashboard/RecommendationCard";
 import { RecentOccurrenceCard, type RecentOccurrence } from "@/components/dashboard/RecentOccurrenceCard";
 import {
   Users, ShieldCheck, Gem, Crown, Award, AlertOctagon, BellRing, DollarSign, Flag, Circle, Loader2,
-  ShoppingCart, Trophy, Percent, MessageCircle, FileText, Send, PlusCircle, Sparkles, Brain,
+  ShoppingCart, Trophy, Percent, Send, Brain,
   TrendingUp, Clock, PackageSearch, CalendarRange, ArrowRight,
 } from "lucide-react";
 import {
@@ -60,15 +59,6 @@ const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 
 /* ---------- Conteúdo estrutural (aguardando lógica nas próximas sprints) ---------- */
 
-const PRODUTOS_FURTADOS = [
-  { produto: "Energético 473ml", total: 18 },
-  { produto: "Chocolate barra", total: 14 },
-  { produto: "Cerveja lata", total: 11 },
-  { produto: "Salgadinho 100g", total: 9 },
-  { produto: "Café cápsula", total: 6 },
-];
-
-const HORAS = ["00", "03", "06", "09", "12", "15", "18", "21"];
 const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const RECOMENDACOES: Recommendation[] = [
@@ -168,14 +158,6 @@ function Dashboard() {
     horario: "—",
   }));
 
-  const quickActions: QuickAction[] = [
-    { icon: MessageCircle, label: "Gerar cobrança via WhatsApp", disabled: true, hint: "Disponível na próxima sprint" },
-    { icon: FileText, label: "Gerar cobrança PDF", disabled: true, hint: "Disponível na próxima sprint" },
-    { icon: Send, label: "Enviar relatório", disabled: true, hint: "Disponível na próxima sprint" },
-    { icon: PlusCircle, label: "Nova ocorrência", hint: "Abrir tela de ocorrências" },
-  ];
-
-  const maxProduto = Math.max(...PRODUTOS_FURTADOS.map((p) => p.total));
 
   return (
     <div className="space-y-8">
