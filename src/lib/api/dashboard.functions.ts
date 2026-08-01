@@ -8,6 +8,8 @@ import {
   dashboardHorarios,
   dashboardProdutos,
   dashboardRecorrentes,
+  financeiroResumo,
+  relatorioExecutivo,
 } from "./dashboard.service";
 
 /** GET /dashboard/executivo */
@@ -45,3 +47,15 @@ export const getDashboardHorarios = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(parseFilters)
   .handler(({ data, context }) => dashboardHorarios(context.supabase, data));
+
+/** GET /dashboard/financeiro/resumo */
+export const getFinanceiroResumo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(parseFilters)
+  .handler(({ data, context }) => financeiroResumo(context.supabase, data));
+
+/** GET /relatorios/executivo */
+export const getRelatorioExecutivo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(parseFilters)
+  .handler(({ data, context }) => relatorioExecutivo(context.supabase, data));
