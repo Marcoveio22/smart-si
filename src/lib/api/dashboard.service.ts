@@ -229,3 +229,34 @@ export async function dashboardHorarios(supabase: DB, f: DashboardFilters) {
   if (error) throw new Error(error.message);
   return { celulas: (data ?? []).map((r: any) => ({ diaSemana: r.dia_semana, hora: r.hora, total: Number(r.total ?? 0), valor: Number(r.valor ?? 0) })) };
 }
+
+/**
+ * GET /relatorios/executivo — consolida os blocos do relatório executivo.
+ * Reaproveita as agregações existentes; nenhum cálculo pesado no cliente.
+ */
+export async function relatorioExecutivo(supabase: DB, f: DashboardFilters) {
+  const [executivo, financeiro, produtos, recorrentes, horarios] = await Promise.all([
+    dashboardExecutivo(supabase, f),
+    financeiroResumo(supabase, f),
+    dashboardProdutos(supabase, f),
+    dashboardRecorrentes(supabase, { ...f, page: 0, pageSize: 20 }),
+    dashboardHorarios(supabase, f),
+  ]);
+  return {
+    geradoEm: new Date().toISOString(),
+    periodo: { from: f.from ?? null, to: f.to ?? null },
+    ocorrencias: {
+      total: executivo.totalOcorrencias,
+      abertas: executivo.ocorrenciasAbertas,
+      finalizadas: executivo.ocorrenciasFinalizadas,
+      valorPerdido: executivo.valorPerdido,
+      valorRecuperado: executivo.valorRecuperado,
+      serie: executivo.serie,
+    },
+    financeiro,
+    produtos: produtos.ranking.slice(0, 20),
+    recorrentes: recorrentes.rows,
+    horarios: horarios.celulas,
+    faturamentoTotal: executivo.faturamentoTotal,
+  };
+}
