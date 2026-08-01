@@ -2,6 +2,17 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getDashboardStats } from "@/lib/dashboard.functions";
+import { getFinanceiroResumo, getDashboardProdutos, getDashboardHorarios } from "@/lib/api/dashboard.functions";
+import { queryKeys } from "@/lib/api/queryKeys";
+import { periodLabel, periodRange, type PeriodKey } from "@/lib/periods";
+import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
+import { FinancialPanel } from "@/components/dashboard/FinancialPanel";
+import { ProductRanking } from "@/components/dashboard/ProductRanking";
+import { CriticalHoursHeatmap } from "@/components/dashboard/CriticalHoursHeatmap";
+import { QuickActionsPanel } from "@/components/dashboard/QuickActionsPanel";
+import { ExecutiveReportDialog } from "@/components/dashboard/ExecutiveReportDialog";
+import { ExportMenu } from "@/components/dashboard/ExportMenu";
+import { useMemo, useState } from "react";
 import { useTenant } from "@/hooks/useTenant";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -79,12 +90,53 @@ const OCORRENCIAS_RECENTES: RecentOccurrence[] = [
 
 function Dashboard() {
   const fetchStats = useServerFn(getDashboardStats);
-  const { selectedLojaId, tenant } = useTenant();
+  const fetchFinanceiro = useServerFn(getFinanceiroResumo);
+  const fetchProdutos = useServerFn(getDashboardProdutos);
+  const fetchHorarios = useServerFn(getDashboardHorarios);
+  const { selectedLojaId, tenant, lojas } = useTenant() as any;
+
+  const [period, setPeriod] = useState<PeriodKey>("30d");
+  const [produtoPeriod, setProdutoPeriod] = useState<PeriodKey>("30d");
+  const [reportOpen, setReportOpen] = useState(false);
+
+  const filters = useMemo(
+    () => ({ lojaId: selectedLojaId ?? null, ...periodRange(period), page: 0, pageSize: 50 }),
+    [selectedLojaId, period],
+  );
+  const produtoFilters = useMemo(
+    () => ({ lojaId: selectedLojaId ?? null, ...periodRange(produtoPeriod), page: 0, pageSize: 200 }),
+    [selectedLojaId, produtoPeriod],
+  );
+
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-stats", selectedLojaId ?? "own"],
     queryFn: () => fetchStats({ data: { lojaId: selectedLojaId } }),
     enabled: !!tenant,
   });
+
+  const financeiroQ = useQuery({
+    queryKey: queryKeys.dashboard.financeiro(filters),
+    queryFn: () => fetchFinanceiro({ data: filters }),
+    enabled: !!tenant,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+  const produtosQ = useQuery({
+    queryKey: queryKeys.dashboard.produtos(produtoFilters),
+    queryFn: () => fetchProdutos({ data: produtoFilters }),
+    enabled: !!tenant,
+    staleTime: 60_000,
+  });
+  const horariosQ = useQuery({
+    queryKey: queryKeys.dashboard.horarios(filters),
+    queryFn: () => fetchHorarios({ data: filters }),
+    enabled: !!tenant,
+    staleTime: 60_000,
+  });
+
+  const lojaLabel =
+    (Array.isArray(lojas) ? lojas.find((l: any) => l.id === selectedLojaId)?.nome : null) ??
+    (selectedLojaId ? "Loja selecionada" : "Todas as lojas");
 
   if (isLoading || !data) {
     return (
@@ -135,10 +187,11 @@ function Dashboard() {
             Visão geral da operação — dados em tempo real do banco
           </p>
         </div>
-        <div className="shrink-0 flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2" disabled title="Filtro de período — próxima sprint">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <PeriodFilter value={period} onChange={setPeriod} />
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setReportOpen(true)}>
             <CalendarRange className="h-4 w-4" />
-            <span className="hidden sm:inline">Hoje</span>
+            <span className="hidden sm:inline">Relatório</span>
           </Button>
         </div>
       </header>
@@ -159,12 +212,13 @@ function Dashboard() {
             delta={deltaAlertas} series={alertaSeries} accent="var(--destructive)" hint="alertas ativos"
           />
           <MetricCard
-            icon={Trophy} label="Valores Recuperados" value="—"
-            delta={null} accent="var(--rating-gold)" hint="aguardando integração"
+            icon={Trophy} label="Valores Recuperados" value={brl(financeiroQ.data?.valorRecuperado ?? 0)}
+            delta={null} accent="var(--rating-gold)" hint={periodLabel(period)}
           />
           <MetricCard
-            icon={Percent} label="Taxa de Recuperação" value="—"
-            delta={null} accent="var(--accent)" hint="aguardando integração"
+            icon={Percent} label="Taxa de Recuperação"
+            value={`${Math.round((financeiroQ.data?.taxaRecuperacao ?? 0) * 100)}%`}
+            delta={null} accent="var(--accent)" hint="valor recuperado / perdido"
           />
         </div>
       </section>
@@ -188,85 +242,37 @@ function Dashboard() {
           </div>
         </DashboardCard>
 
-        <Card className="border-border/70 shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden">
-          <CardContent
-            className="p-6 h-full flex flex-col items-center justify-center text-center gap-3"
-            style={{
-              background:
-                "linear-gradient(160deg, color-mix(in oklab, var(--rating-gold) 14%, transparent), color-mix(in oklab, var(--primary) 8%, transparent))",
-            }}
-          >
-            <span
-              className="grid h-14 w-14 place-items-center rounded-full"
-              style={{ background: "color-mix(in oklab, var(--rating-gold) 25%, transparent)", color: "var(--rating-gold)" }}
-            >
-              <Trophy className="h-7 w-7" />
-            </span>
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valores Recuperados</div>
-            <div className="text-3xl font-bold">—</div>
-            <p className="max-w-[26ch] text-xs text-muted-foreground">
-              Total recuperado a partir das ocorrências tratadas. Painel preparado para receber os dados de recuperação.
-            </p>
-          </CardContent>
-        </Card>
+        <FinancialPanel data={financeiroQ.data as any} isLoading={financeiroQ.isLoading} />
 
-        <DashboardCard title="Ações Rápidas" icon={Sparkles}>
-          <div className="grid gap-2">
-            {quickActions.map((a) =>
-              a.label === "Nova ocorrência" ? (
-                <Link key={a.label} to="/ocorrencias" className="block">
-                  <QuickActionCard action={a} />
-                </Link>
-              ) : (
-                <QuickActionCard key={a.label} action={a} />
-              ),
-            )}
-          </div>
-        </DashboardCard>
+        <QuickActionsPanel filters={filters} onOpenReport={() => setReportOpen(true)} />
       </section>
 
-      {/* Linha 3 — gráficos estruturais */}
+      {/* Linha 3 — ranking de produtos e horários críticos */}
       <section className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <DashboardCard title="Produtos Mais Furtados" icon={PackageSearch} contentClassName="h-[280px]">
-          <ResponsiveContainer>
-            <BarChart data={PRODUTOS_FURTADOS} layout="vertical" margin={{ left: 8, right: 16 }}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.15} horizontal={false} />
-              <XAxis type="number" fontSize={11} />
-              <YAxis type="category" dataKey="produto" width={110} fontSize={11} />
-              <Tooltip />
-              <Bar dataKey="total" fill="var(--chart-1)" radius={[0, 4, 4, 0]} barSize={16} />
-            </BarChart>
-          </ResponsiveContainer>
-        </DashboardCard>
+        <ProductRanking
+          data={(produtosQ.data?.ranking ?? []) as any}
+          isLoading={produtosQ.isLoading}
+          period={produtoPeriod}
+          onPeriodChange={setProdutoPeriod}
+        />
 
-        <DashboardCard title="Horários com Maior Incidência" icon={Clock}>
-          <div className="space-y-2">
-            <div className="grid grid-cols-[auto_repeat(8,minmax(0,1fr))] gap-1 items-center">
-              <div />
-              {HORAS.map((h) => (
-                <div key={h} className="text-center text-[10px] text-muted-foreground">{h}h</div>
-              ))}
-              {DIAS.map((d, di) => (
-                <div key={d} className="contents">
-                  <div className="pr-1 text-[10px] text-muted-foreground">{d}</div>
-                  {HORAS.map((h, hi) => {
-                    const intensity = ((di * 3 + hi * 2) % 5) / 4;
-                    return (
-                      <div
-                        key={h}
-                        className="aspect-square rounded-sm transition-transform duration-200 hover:scale-110"
-                        style={{ background: `color-mix(in oklab, var(--chart-5) ${10 + intensity * 70}%, var(--muted))` }}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Estrutura visual — cálculo de incidência por faixa horária será ligado na próxima sprint.
-            </p>
-          </div>
-        </DashboardCard>
+        <CriticalHoursHeatmap
+          data={(horariosQ.data?.celulas ?? []) as any}
+          isLoading={horariosQ.isLoading}
+          action={
+            <ExportMenu
+              filename="horarios-criticos"
+              title="Horários com maior incidência"
+              rows={(horariosQ.data?.celulas ?? []) as any[]}
+              cols={[
+                { key: "diaSemana", header: "Dia da semana", format: (v: unknown) => DIAS[Number(v)] ?? String(v) },
+                { key: "hora", header: "Hora" },
+                { key: "total", header: "Ocorrências" },
+                { key: "valor", header: "Valor perdido", format: (v: unknown) => brl(Number(v ?? 0)) },
+              ]}
+            />
+          }
+        />
       </section>
 
       {/* Linha 4 — IA */}
@@ -393,6 +399,13 @@ function Dashboard() {
           </DashboardCard>
         </div>
       </section>
+      <ExecutiveReportDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        filters={filters}
+        periodoLabel={periodLabel(period)}
+        lojaLabel={lojaLabel}
+      />
     </div>
   );
 }
