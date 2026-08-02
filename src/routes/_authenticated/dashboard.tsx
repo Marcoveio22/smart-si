@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getDashboardStats } from "@/lib/dashboard.functions";
-import { getFinanceiroResumo, getDashboardProdutos, getDashboardHorarios } from "@/lib/api/dashboard.functions";
+import { getFinanceiroResumo, getDashboardProdutos, getDashboardHorarios, getClientesRecorrentes } from "@/lib/api/dashboard.functions";
+import { getOcorrencias } from "@/lib/api/ocorrencias.functions";
+
 import { queryKeys } from "@/lib/api/queryKeys";
 import { periodLabel, periodRange, type PeriodKey } from "@/lib/periods";
 import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
@@ -24,6 +26,10 @@ import { SectionHeader } from "@/components/dashboard/SectionHeader";
 import { RecurringClientCard, type RecurringClient } from "@/components/dashboard/RecurringClientCard";
 import { RecommendationCard, type Recommendation } from "@/components/dashboard/RecommendationCard";
 import { RecentOccurrenceCard, type RecentOccurrence } from "@/components/dashboard/RecentOccurrenceCard";
+import { RecurringClientModal, type RecurringClientRow } from "@/components/dashboard/RecurringClientModal";
+import { OccurrenceDetailsModal } from "@/components/dashboard/OccurrenceDetailsModal";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import {
   Users, ShieldCheck, Gem, Crown, Award, AlertOctagon, BellRing, DollarSign, Flag, Circle, Loader2,
   ShoppingCart, Trophy, Percent, Send, Brain,
@@ -69,12 +75,17 @@ const RECOMENDACOES: Recommendation[] = [
   { id: "5", titulo: "Auditar produtos com maior perda", detalhe: "Concentração de perdas em 5 SKUs", prioridade: "baixa", icon: PackageSearch },
 ];
 
-const OCORRENCIAS_RECENTES: RecentOccurrence[] = [
-  { id: "1", descricao: "Diferença de valor na conferência do caixa", status: "Em análise", loja: "Loja Principal", horario: "há 12 min", statusTone: "atencao" },
-  { id: "2", descricao: "Produto retirado sem registro de compra", status: "Crítico", loja: "POINT VILA YARA", horario: "há 48 min", statusTone: "critico" },
-  { id: "3", descricao: "Cobrança recuperada com sucesso", status: "Resolvido", loja: "My Helbor", horario: "há 2 h", statusTone: "ok" },
-  { id: "4", descricao: "Cartão com uso atípico em múltiplos horários", status: "Em análise", loja: "CONDOMINIO BELA VISTA", horario: "há 3 h", statusTone: "atencao" },
-];
+const relativo = (iso?: string | null) => {
+  if (!iso) return "—";
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.round(diff / 60000);
+  if (min < 1) return "agora";
+  if (min < 60) return `há ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `há ${h} h`;
+  return `há ${Math.round(h / 24)} d`;
+};
+
 
 /* ---------------------------------- Página ---------------------------------- */
 
@@ -83,11 +94,16 @@ function Dashboard() {
   const fetchFinanceiro = useServerFn(getFinanceiroResumo);
   const fetchProdutos = useServerFn(getDashboardProdutos);
   const fetchHorarios = useServerFn(getDashboardHorarios);
+  const fetchRecorrentes = useServerFn(getClientesRecorrentes);
+  const fetchOcorrencias = useServerFn(getOcorrencias);
   const { selectedLojaId, tenant, lojas } = useTenant() as any;
 
   const [period, setPeriod] = useState<PeriodKey>("30d");
   const [produtoPeriod, setProdutoPeriod] = useState<PeriodKey>("30d");
   const [reportOpen, setReportOpen] = useState(false);
+  const [clienteSel, setClienteSel] = useState<RecurringClientRow | null>(null);
+  const [ocorrenciaSel, setOcorrenciaSel] = useState<string | null>(null);
+
 
   const filters = useMemo(
     () => ({ lojaId: selectedLojaId ?? null, ...periodRange(period), page: 0, pageSize: 50 }),
@@ -124,6 +140,24 @@ function Dashboard() {
     staleTime: 60_000,
   });
 
+  const recorrentesFilters = useMemo(() => ({ ...filters, page: 0, pageSize: 10 }), [filters]);
+  const recorrentesQ = useQuery({
+    queryKey: queryKeys.dashboard.recorrentes(recorrentesFilters),
+    queryFn: () => fetchRecorrentes({ data: recorrentesFilters }),
+    enabled: !!tenant,
+    staleTime: 60_000,
+  });
+
+  const recentesFilters = useMemo(() => ({ ...filters, page: 0, pageSize: 8 }), [filters]);
+  const recentesQ = useQuery({
+    queryKey: queryKeys.ocorrencias.lista(recentesFilters),
+    queryFn: () => fetchOcorrencias({ data: recentesFilters }),
+    enabled: !!tenant,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+
   const lojaLabel =
     (Array.isArray(lojas) ? lojas.find((l: any) => l.id === selectedLojaId)?.nome : null) ??
     (selectedLojaId ? "Loja selecionada" : "Todas as lojas");
@@ -150,13 +184,30 @@ function Dashboard() {
       ? ((alertaSeries[alertaSeries.length - 1] - alertaSeries[alertaSeries.length - 2]) / alertaSeries[alertaSeries.length - 2]) * 100
       : null;
 
-  const recorrentes: RecurringClient[] = (top10 as any[]).slice(0, 5).map((c) => ({
-    id: c.numero_cartao,
+  const recorrentesRows = ((recorrentesQ.data?.rows ?? []) as RecurringClientRow[])
+    .slice()
+    .sort((a, b) => (Number(b.total_ocorrencias ?? 0) - Number(a.total_ocorrencias ?? 0)))
+    .slice(0, 5);
+
+  const recorrentes: RecurringClient[] = recorrentesRows.map((c) => ({
+    id: c.cliente_id ?? c.numero_cartao,
     nome: c.numero_cartao,
-    ocorrencias: c.total_compras,
-    ultimaOcorrencia: `Rating ${c.rating_final ?? "—"} · ${brl(Number(c.total_gasto) || 0)}`,
-    horario: "—",
+    ocorrencias: Number(c.total_ocorrencias ?? 0),
+    ultimaOcorrencia: `Última: ${c.ultima_ocorrencia ? new Date(c.ultima_ocorrencia).toLocaleDateString("pt-BR") : "—"} · Perda ${brl(Number(c.valor_perdido ?? 0))}`,
+    horario: relativo(c.ultima_ocorrencia),
+    valorRecuperado: brl(Number(c.valor_recuperado ?? 0)),
   }));
+
+  const recentes: RecentOccurrence[] = ((recentesQ.data?.rows ?? []) as any[]).slice(0, 4).map((o) => ({
+    id: o.id,
+    descricao: o.descricao ?? o.tipo_ocorrencia ?? "Ocorrência registrada",
+    status: o.status ?? "Nova",
+    loja: o.loja_nome ?? "—",
+    horario: relativo(o.data_ocorrencia),
+    produto: o.produto_principal ?? null,
+    valor: brl(Number(o.valor_perdido ?? 0)),
+  }));
+
 
 
   return (
@@ -217,11 +268,21 @@ function Dashboard() {
           }
         >
           <div className="space-y-1">
-            {recorrentes.map((c) => <RecurringClientCard key={c.id} client={c} />)}
-            {!recorrentes.length && (
-              <div className="py-8 text-center text-sm text-muted-foreground">Sem clientes identificados</div>
+            {recorrentesQ.isLoading && [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+            {recorrentesQ.isError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                {(recorrentesQ.error as any)?.message ?? "Erro ao carregar clientes recorrentes"}
+              </div>
+            )}
+            {!recorrentesQ.isLoading &&
+              recorrentes.map((c, i) => (
+                <RecurringClientCard key={c.id} client={c} onClick={() => setClienteSel(recorrentesRows[i] ?? null)} />
+              ))}
+            {!recorrentesQ.isLoading && !recorrentesQ.isError && !recorrentes.length && (
+              <div className="py-8 text-center text-sm text-muted-foreground">Sem clientes recorrentes no período</div>
             )}
           </div>
+
         </DashboardCard>
 
         <FinancialPanel data={financeiroQ.data as any} isLoading={financeiroQ.isLoading} />
@@ -278,8 +339,24 @@ function Dashboard() {
           }
         >
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {OCORRENCIAS_RECENTES.map((o) => <RecentOccurrenceCard key={o.id} item={o} />)}
+            {recentesQ.isLoading &&
+              [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+            {recentesQ.isError && (
+              <div className="col-span-full rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                {(recentesQ.error as any)?.message ?? "Erro ao carregar ocorrências"}
+              </div>
+            )}
+            {!recentesQ.isLoading &&
+              recentes.map((o) => (
+                <RecentOccurrenceCard key={o.id} item={o} onClick={() => setOcorrenciaSel(o.id)} />
+              ))}
+            {!recentesQ.isLoading && !recentesQ.isError && !recentes.length && (
+              <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                Nenhuma ocorrência no período selecionado
+              </div>
+            )}
           </div>
+
         </DashboardCard>
       </section>
 
@@ -388,6 +465,18 @@ function Dashboard() {
         periodoLabel={periodLabel(period)}
         lojaLabel={lojaLabel}
       />
+      <RecurringClientModal
+        cliente={clienteSel}
+        filters={filters}
+        open={!!clienteSel}
+        onOpenChange={(v) => !v && setClienteSel(null)}
+      />
+      <OccurrenceDetailsModal
+        ocorrenciaId={ocorrenciaSel}
+        open={!!ocorrenciaSel}
+        onOpenChange={(v) => !v && setOcorrenciaSel(null)}
+      />
+
     </div>
   );
 }
