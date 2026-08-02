@@ -140,6 +140,24 @@ function Dashboard() {
     staleTime: 60_000,
   });
 
+  const recorrentesFilters = useMemo(() => ({ ...filters, page: 0, pageSize: 10 }), [filters]);
+  const recorrentesQ = useQuery({
+    queryKey: queryKeys.dashboard.recorrentes(recorrentesFilters),
+    queryFn: () => fetchRecorrentes({ data: recorrentesFilters }),
+    enabled: !!tenant,
+    staleTime: 60_000,
+  });
+
+  const recentesFilters = useMemo(() => ({ ...filters, page: 0, pageSize: 8 }), [filters]);
+  const recentesQ = useQuery({
+    queryKey: queryKeys.ocorrencias.lista(recentesFilters),
+    queryFn: () => fetchOcorrencias({ data: recentesFilters }),
+    enabled: !!tenant,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+
   const lojaLabel =
     (Array.isArray(lojas) ? lojas.find((l: any) => l.id === selectedLojaId)?.nome : null) ??
     (selectedLojaId ? "Loja selecionada" : "Todas as lojas");
