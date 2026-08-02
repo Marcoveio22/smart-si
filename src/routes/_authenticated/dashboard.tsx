@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getDashboardStats } from "@/lib/dashboard.functions";
-import { getFinanceiroResumo, getDashboardProdutos, getDashboardHorarios } from "@/lib/api/dashboard.functions";
+import { getFinanceiroResumo, getDashboardProdutos, getDashboardHorarios, getClientesRecorrentes } from "@/lib/api/dashboard.functions";
+import { getOcorrencias } from "@/lib/api/ocorrencias.functions";
+
 import { queryKeys } from "@/lib/api/queryKeys";
 import { periodLabel, periodRange, type PeriodKey } from "@/lib/periods";
 import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
@@ -24,6 +26,10 @@ import { SectionHeader } from "@/components/dashboard/SectionHeader";
 import { RecurringClientCard, type RecurringClient } from "@/components/dashboard/RecurringClientCard";
 import { RecommendationCard, type Recommendation } from "@/components/dashboard/RecommendationCard";
 import { RecentOccurrenceCard, type RecentOccurrence } from "@/components/dashboard/RecentOccurrenceCard";
+import { RecurringClientModal, type RecurringClientRow } from "@/components/dashboard/RecurringClientModal";
+import { OccurrenceDetailsModal } from "@/components/dashboard/OccurrenceDetailsModal";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import {
   Users, ShieldCheck, Gem, Crown, Award, AlertOctagon, BellRing, DollarSign, Flag, Circle, Loader2,
   ShoppingCart, Trophy, Percent, Send, Brain,
