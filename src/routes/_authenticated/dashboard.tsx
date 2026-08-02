@@ -94,11 +94,16 @@ function Dashboard() {
   const fetchFinanceiro = useServerFn(getFinanceiroResumo);
   const fetchProdutos = useServerFn(getDashboardProdutos);
   const fetchHorarios = useServerFn(getDashboardHorarios);
+  const fetchRecorrentes = useServerFn(getClientesRecorrentes);
+  const fetchOcorrencias = useServerFn(getOcorrencias);
   const { selectedLojaId, tenant, lojas } = useTenant() as any;
 
   const [period, setPeriod] = useState<PeriodKey>("30d");
   const [produtoPeriod, setProdutoPeriod] = useState<PeriodKey>("30d");
   const [reportOpen, setReportOpen] = useState(false);
+  const [clienteSel, setClienteSel] = useState<RecurringClientRow | null>(null);
+  const [ocorrenciaSel, setOcorrenciaSel] = useState<string | null>(null);
+
 
   const filters = useMemo(
     () => ({ lojaId: selectedLojaId ?? null, ...periodRange(period), page: 0, pageSize: 50 }),
