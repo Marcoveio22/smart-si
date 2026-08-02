@@ -69,12 +69,17 @@ const RECOMENDACOES: Recommendation[] = [
   { id: "5", titulo: "Auditar produtos com maior perda", detalhe: "Concentração de perdas em 5 SKUs", prioridade: "baixa", icon: PackageSearch },
 ];
 
-const OCORRENCIAS_RECENTES: RecentOccurrence[] = [
-  { id: "1", descricao: "Diferença de valor na conferência do caixa", status: "Em análise", loja: "Loja Principal", horario: "há 12 min", statusTone: "atencao" },
-  { id: "2", descricao: "Produto retirado sem registro de compra", status: "Crítico", loja: "POINT VILA YARA", horario: "há 48 min", statusTone: "critico" },
-  { id: "3", descricao: "Cobrança recuperada com sucesso", status: "Resolvido", loja: "My Helbor", horario: "há 2 h", statusTone: "ok" },
-  { id: "4", descricao: "Cartão com uso atípico em múltiplos horários", status: "Em análise", loja: "CONDOMINIO BELA VISTA", horario: "há 3 h", statusTone: "atencao" },
-];
+const relativo = (iso?: string | null) => {
+  if (!iso) return "—";
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.round(diff / 60000);
+  if (min < 1) return "agora";
+  if (min < 60) return `há ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `há ${h} h`;
+  return `há ${Math.round(h / 24)} d`;
+};
+
 
 /* ---------------------------------- Página ---------------------------------- */
 
