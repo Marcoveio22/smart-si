@@ -465,6 +465,18 @@ function Dashboard() {
         periodoLabel={periodLabel(period)}
         lojaLabel={lojaLabel}
       />
+      <RecurringClientModal
+        cliente={clienteSel}
+        filters={filters}
+        open={!!clienteSel}
+        onOpenChange={(v) => !v && setClienteSel(null)}
+      />
+      <OccurrenceDetailsModal
+        ocorrenciaId={ocorrenciaSel}
+        open={!!ocorrenciaSel}
+        onOpenChange={(v) => !v && setOcorrenciaSel(null)}
+      />
+
     </div>
   );
 }
