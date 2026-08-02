@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getSignedUrls } from "@/lib/api/storage.functions";
+import { getOcorrenciaImagens } from "@/lib/api/ocorrencias.functions";
+import { queryKeys } from "@/lib/api/queryKeys";
 import { ImageIcon } from "lucide-react";
 import { OccurrenceStatusBadge } from "./OccurrenceStatusBadge";
 
@@ -12,18 +14,28 @@ export type RecentOccurrence = {
   horario: string;
   produto?: string | null;
   valor?: string;
-  thumbPath?: string | null;
 };
 
 export function RecentOccurrenceCard({ item, onClick }: { item: RecentOccurrence; onClick?: () => void }) {
+  const fetchImagens = useServerFn(getOcorrenciaImagens);
   const signUrls = useServerFn(getSignedUrls);
+
+  const imagensQ = useQuery({
+    queryKey: queryKeys.ocorrencias.imagens(item.id),
+    queryFn: () => fetchImagens({ data: { id: item.id } }),
+    staleTime: 5 * 60_000,
+  });
+
+  const first = (imagensQ.data ?? [])[0] as any;
+  const path = (first?.thumbnail ?? first?.storage_path ?? null) as string | null;
+
   const { data } = useQuery({
-    queryKey: ["storage", "signed", [item.thumbPath]],
-    queryFn: () => signUrls({ data: { paths: [item.thumbPath!] } }),
-    enabled: !!item.thumbPath,
+    queryKey: ["storage", "signed", [path]],
+    queryFn: () => signUrls({ data: { paths: [path!] } }),
+    enabled: !!path,
     staleTime: 10 * 60_000,
   });
-  const thumb = item.thumbPath ? data?.urls?.[item.thumbPath] : undefined;
+  const thumb = path ? data?.urls?.[path] : undefined;
 
   return (
     <button
