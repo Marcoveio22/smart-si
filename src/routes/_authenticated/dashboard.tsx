@@ -268,11 +268,21 @@ function Dashboard() {
           }
         >
           <div className="space-y-1">
-            {recorrentes.map((c) => <RecurringClientCard key={c.id} client={c} />)}
-            {!recorrentes.length && (
-              <div className="py-8 text-center text-sm text-muted-foreground">Sem clientes identificados</div>
+            {recorrentesQ.isLoading && [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+            {recorrentesQ.isError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                {(recorrentesQ.error as any)?.message ?? "Erro ao carregar clientes recorrentes"}
+              </div>
+            )}
+            {!recorrentesQ.isLoading &&
+              recorrentes.map((c, i) => (
+                <RecurringClientCard key={c.id} client={c} onClick={() => setClienteSel(recorrentesRows[i] ?? null)} />
+              ))}
+            {!recorrentesQ.isLoading && !recorrentesQ.isError && !recorrentes.length && (
+              <div className="py-8 text-center text-sm text-muted-foreground">Sem clientes recorrentes no período</div>
             )}
           </div>
+
         </DashboardCard>
 
         <FinancialPanel data={financeiroQ.data as any} isLoading={financeiroQ.isLoading} />
@@ -329,8 +339,24 @@ function Dashboard() {
           }
         >
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {OCORRENCIAS_RECENTES.map((o) => <RecentOccurrenceCard key={o.id} item={o} />)}
+            {recentesQ.isLoading &&
+              [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+            {recentesQ.isError && (
+              <div className="col-span-full rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                {(recentesQ.error as any)?.message ?? "Erro ao carregar ocorrências"}
+              </div>
+            )}
+            {!recentesQ.isLoading &&
+              recentes.map((o) => (
+                <RecentOccurrenceCard key={o.id} item={o} onClick={() => setOcorrenciaSel(o.id)} />
+              ))}
+            {!recentesQ.isLoading && !recentesQ.isError && !recentes.length && (
+              <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
+                Nenhuma ocorrência no período selecionado
+              </div>
+            )}
           </div>
+
         </DashboardCard>
       </section>
 
