@@ -184,13 +184,30 @@ function Dashboard() {
       ? ((alertaSeries[alertaSeries.length - 1] - alertaSeries[alertaSeries.length - 2]) / alertaSeries[alertaSeries.length - 2]) * 100
       : null;
 
-  const recorrentes: RecurringClient[] = (top10 as any[]).slice(0, 5).map((c) => ({
-    id: c.numero_cartao,
+  const recorrentesRows = ((recorrentesQ.data?.rows ?? []) as RecurringClientRow[])
+    .slice()
+    .sort((a, b) => (Number(b.total_ocorrencias ?? 0) - Number(a.total_ocorrencias ?? 0)))
+    .slice(0, 5);
+
+  const recorrentes: RecurringClient[] = recorrentesRows.map((c) => ({
+    id: c.cliente_id ?? c.numero_cartao,
     nome: c.numero_cartao,
-    ocorrencias: c.total_compras,
-    ultimaOcorrencia: `Rating ${c.rating_final ?? "—"} · ${brl(Number(c.total_gasto) || 0)}`,
-    horario: "—",
+    ocorrencias: Number(c.total_ocorrencias ?? 0),
+    ultimaOcorrencia: `Última: ${c.ultima_ocorrencia ? new Date(c.ultima_ocorrencia).toLocaleDateString("pt-BR") : "—"} · Perda ${brl(Number(c.valor_perdido ?? 0))}`,
+    horario: relativo(c.ultima_ocorrencia),
+    valorRecuperado: brl(Number(c.valor_recuperado ?? 0)),
   }));
+
+  const recentes: RecentOccurrence[] = ((recentesQ.data?.rows ?? []) as any[]).slice(0, 4).map((o) => ({
+    id: o.id,
+    descricao: o.descricao ?? o.tipo_ocorrencia ?? "Ocorrência registrada",
+    status: o.status ?? "Nova",
+    loja: o.loja_nome ?? "—",
+    horario: relativo(o.data_ocorrencia),
+    produto: o.produto_principal ?? null,
+    valor: brl(Number(o.valor_perdido ?? 0)),
+  }));
+
 
 
   return (
