@@ -182,15 +182,19 @@ function Dashboard() {
     (Array.isArray(lojas) ? lojas.find((l: any) => l.id === selectedLojaId)?.nome : null) ??
     (selectedLojaId ? "Loja selecionada" : "Todas as lojas");
 
-  if (isLoading || !data) {
-    return (
-      <div className="flex items-center justify-center h-64 text-muted-foreground">
-        <Loader2 className="h-5 w-5 mr-2 animate-spin" />Carregando dados do banco...
-      </div>
-    );
-  }
+  const statsReady = !isLoading && !!data;
+  const safeStats = (data ?? {
+    totalClientes: 0,
+    byRating: {},
+    byStatusManual: {},
+    alertasAtivos: 0,
+    faturamentoTotal: 0,
+    fatPorMes: [],
+    alertasPorDia: [],
+    top10: [],
+  }) as any;
 
-  const { totalClientes, byRating, byStatusManual, alertasAtivos, faturamentoTotal, fatPorMes, alertasPorDia, top10 } = data;
+  const { totalClientes, byRating, byStatusManual, alertasAtivos, faturamentoTotal, fatPorMes, alertasPorDia, top10 } = safeStats;
   const pieData = ["DIAMOND", "GOLD", "SILVER", "RED", "TRUSTED"].map((r) => ({ name: r, value: byRating[r] ?? 0 }));
 
   const fatSeries = fatPorMes.map((m: any) => Number(m.total) || 0);
