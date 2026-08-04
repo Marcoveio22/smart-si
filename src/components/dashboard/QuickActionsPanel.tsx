@@ -121,16 +121,30 @@ export function QuickActionsPanel({
     {
       icon: MessageCircle,
       label: "Gerar cobrança via WhatsApp",
-      hint: "Registrar e enviar notificação",
+      hint: "Enviar notificação de cobrança",
       onClick: () => setMode("whatsapp"),
+      accent: "var(--rating-trusted)",
     },
-    { icon: FileText, label: "Gerar cobrança em PDF", hint: "Gerar documento para o síndico", onClick: () => setMode("pdf") },
-    { icon: Send, label: "Enviar relatório", hint: "Relatório executivo do período", onClick: onOpenReport },
+    {
+      icon: FileText,
+      label: "Gerar cobrança em PDF",
+      hint: "Gerar relatório para o síndico",
+      onClick: () => setMode("pdf"),
+      accent: "var(--chart-1)",
+    },
+    {
+      icon: Send,
+      label: "Enviar relatório por e-mail",
+      hint: "Enviar relatório personalizado",
+      onClick: onOpenReport,
+      accent: "var(--rating-diamond)",
+    },
     {
       icon: PlusCircle,
       label: "Nova ocorrência",
       hint: "Registrar novo caso",
       onClick: () => navigate({ to: "/ocorrencias" }),
+      accent: "var(--rating-gold)",
     },
   ];
 

@@ -14,7 +14,7 @@ import { CriticalHoursHeatmap } from "@/components/dashboard/CriticalHoursHeatma
 import { QuickActionsPanel } from "@/components/dashboard/QuickActionsPanel";
 import { ExecutiveReportDialog } from "@/components/dashboard/ExecutiveReportDialog";
 import { ExportMenu } from "@/components/dashboard/ExportMenu";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTenant } from "@/hooks/useTenant";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,11 +29,15 @@ import { RecentOccurrenceCard, type RecentOccurrence } from "@/components/dashbo
 import { RecurringClientModal, type RecurringClientRow } from "@/components/dashboard/RecurringClientModal";
 import { OccurrenceDetailsModal } from "@/components/dashboard/OccurrenceDetailsModal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RecoveredHighlightCard } from "@/components/dashboard/RecoveredHighlightCard";
+import { HorizontalScroller } from "@/components/dashboard/HorizontalScroller";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   Users, ShieldCheck, Gem, Crown, Award, AlertOctagon, BellRing, DollarSign, Flag, Circle, Loader2,
   ShoppingCart, Trophy, Percent, Send, Brain,
-  TrendingUp, Clock, PackageSearch, CalendarRange, ArrowRight,
+  TrendingUp, Clock, PackageSearch, CalendarRange, ArrowRight, RefreshCw, AlertTriangle,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid,
@@ -103,6 +107,22 @@ function Dashboard() {
   const [reportOpen, setReportOpen] = useState(false);
   const [clienteSel, setClienteSel] = useState<RecurringClientRow | null>(null);
   const [ocorrenciaSel, setOcorrenciaSel] = useState<string | null>(null);
+  const [nome, setNome] = useState("Gestor");
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: u }) => {
+      const email = u.user?.email ?? "";
+      if (email) setNome(email.split("@")[0]);
+    });
+  }, []);
+
+  const saudacao = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return "Bom dia";
+    if (h < 18) return "Boa tarde";
+    return "Boa noite";
+  })();
 
 
   const filters = useMemo(
@@ -162,15 +182,19 @@ function Dashboard() {
     (Array.isArray(lojas) ? lojas.find((l: any) => l.id === selectedLojaId)?.nome : null) ??
     (selectedLojaId ? "Loja selecionada" : "Todas as lojas");
 
-  if (isLoading || !data) {
-    return (
-      <div className="flex items-center justify-center h-64 text-muted-foreground">
-        <Loader2 className="h-5 w-5 mr-2 animate-spin" />Carregando dados do banco...
-      </div>
-    );
-  }
+  const statsReady = !isLoading && !!data;
+  const safeStats = (data ?? {
+    totalClientes: 0,
+    byRating: {},
+    byStatusManual: {},
+    alertasAtivos: 0,
+    faturamentoTotal: 0,
+    fatPorMes: [],
+    alertasPorDia: [],
+    top10: [],
+  }) as any;
 
-  const { totalClientes, byRating, byStatusManual, alertasAtivos, faturamentoTotal, fatPorMes, alertasPorDia, top10 } = data;
+  const { totalClientes, byRating, byStatusManual, alertasAtivos, faturamentoTotal, fatPorMes, alertasPorDia, top10 } = safeStats;
   const pieData = ["DIAMOND", "GOLD", "SILVER", "RED", "TRUSTED"].map((r) => ({ name: r, value: byRating[r] ?? 0 }));
 
   const fatSeries = fatPorMes.map((m: any) => Number(m.total) || 0);
@@ -198,7 +222,7 @@ function Dashboard() {
     valorRecuperado: brl(Number(c.valor_recuperado ?? 0)),
   }));
 
-  const recentes: RecentOccurrence[] = ((recentesQ.data?.rows ?? []) as any[]).slice(0, 4).map((o) => ({
+  const recentes: RecentOccurrence[] = ((recentesQ.data?.rows ?? []) as any[]).slice(0, 8).map((o) => ({
     id: o.id,
     descricao: o.descricao ?? o.tipo_ocorrencia ?? "Ocorrência registrada",
     status: o.status ?? "Nova",
@@ -213,11 +237,13 @@ function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Topo */}
-      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold tracking-tight">Dashboard Executivo</h1>
-          <p className="text-sm text-muted-foreground truncate">
-            Visão geral da operação — dados em tempo real do banco
+          <h1 className="truncate text-2xl font-extrabold tracking-tight">
+            {saudacao}, <span className="capitalize">{nome}</span>! 👋
+          </h1>
+          <p className="truncate text-sm text-muted-foreground">
+            Aqui está o resumo da sua operação — {lojaLabel}
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
@@ -226,12 +252,29 @@ function Dashboard() {
             <CalendarRange className="h-4 w-4" />
             <span className="hidden sm:inline">Relatório</span>
           </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Atualizar dados"
+            className="h-9 w-9"
+            onClick={() => queryClient.invalidateQueries()}
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 
       {/* Linha 1 — indicadores */}
       <section>
+        {!statsReady ? (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-[118px] w-full rounded-xl" />
+            ))}
+          </div>
+        ) : (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+
           <MetricCard
             icon={DollarSign} label="Faturamento do Dia" value={brl(faturamentoTotal)}
             delta={deltaFat} series={fatSeries} accent="var(--rating-trusted)" hint="acumulado do período"
@@ -254,44 +297,61 @@ function Dashboard() {
             delta={null} accent="var(--accent)" hint="valor recuperado / perdido"
           />
         </div>
+        )}
       </section>
+
 
       {/* Linha 2 — 3 colunas */}
       <section className="grid gap-4 grid-cols-1 lg:grid-cols-3">
-        <DashboardCard
-          title="Clientes Recorrentes Identificados Hoje"
-          icon={Users}
-          action={
-            <Button asChild variant="ghost" size="sm" className="gap-1 text-xs">
-              <Link to="/clientes">Ver Todos <ArrowRight className="h-3 w-3" /></Link>
+        <Card className="overflow-hidden border-border/70 p-0 shadow-sm transition-all duration-200 hover:shadow-md">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-destructive/25 bg-destructive/8 px-4 py-3">
+            <div className="min-w-0">
+              <h3 className="flex min-w-0 items-center gap-2 text-sm font-bold uppercase tracking-wide text-destructive">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span className="truncate">Clientes Recorrentes Identificados</span>
+              </h3>
+              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                {recorrentes.length
+                  ? `${recorrentes.length} cliente(s) com histórico de ocorrências no período`
+                  : "Nenhum cliente recorrente no período"}
+              </p>
+            </div>
+            <Button asChild variant="ghost" size="sm" className="shrink-0 gap-1 text-xs">
+              <Link to="/clientes">Ver todos <ArrowRight className="h-3 w-3" /></Link>
             </Button>
-          }
-        >
-          <div className="space-y-1">
-            {recorrentesQ.isLoading && [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-            {recorrentesQ.isError && (
-              <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
-                {(recorrentesQ.error as any)?.message ?? "Erro ao carregar clientes recorrentes"}
-              </div>
-            )}
-            {!recorrentesQ.isLoading &&
-              recorrentes.map((c, i) => (
-                <RecurringClientCard key={c.id} client={c} onClick={() => setClienteSel(recorrentesRows[i] ?? null)} />
-              ))}
-            {!recorrentesQ.isLoading && !recorrentesQ.isError && !recorrentes.length && (
-              <div className="py-8 text-center text-sm text-muted-foreground">Sem clientes recorrentes no período</div>
-            )}
           </div>
+          <CardContent className="p-3">
+            <div className="space-y-1">
+              {recorrentesQ.isLoading && [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+              {recorrentesQ.isError && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                  {(recorrentesQ.error as any)?.message ?? "Erro ao carregar clientes recorrentes"}
+                </div>
+              )}
+              {!recorrentesQ.isLoading &&
+                recorrentes.map((c, i) => (
+                  <RecurringClientCard key={c.id} client={c} onClick={() => setClienteSel(recorrentesRows[i] ?? null)} />
+                ))}
+              {!recorrentesQ.isLoading && !recorrentesQ.isError && !recorrentes.length && (
+                <div className="py-8 text-center text-sm text-muted-foreground">Sem clientes recorrentes no período</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        </DashboardCard>
-
-        <FinancialPanel data={financeiroQ.data as any} isLoading={financeiroQ.isLoading} />
+        <RecoveredHighlightCard
+          nome={nome}
+          valorRecuperado={financeiroQ.data?.valorRecuperado}
+          taxaRecuperacao={financeiroQ.data?.taxaRecuperacao}
+          periodoLabel={periodLabel(period)}
+          isLoading={financeiroQ.isLoading}
+        />
 
         <QuickActionsPanel filters={filters} onOpenReport={() => setReportOpen(true)} />
       </section>
 
       {/* Linha 3 — ranking de produtos e horários críticos */}
-      <section className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+      <section className="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         <ProductRanking
           data={(produtosQ.data?.ranking ?? []) as any}
           isLoading={produtosQ.isLoading}
@@ -316,12 +376,9 @@ function Dashboard() {
             />
           }
         />
-      </section>
 
-      {/* Linha 4 — IA */}
-      <section>
         <DashboardCard title="IA Recomenda Hoje" icon={Brain}>
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-1">
+          <div className="grid gap-2">
             {RECOMENDACOES.map((r) => <RecommendationCard key={r.id} item={r} />)}
           </div>
         </DashboardCard>
@@ -338,24 +395,30 @@ function Dashboard() {
             </Button>
           }
         >
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <HorizontalScroller>
             {recentesQ.isLoading &&
-              [0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+              [0, 1, 2, 3].map((i) => (
+                <div key={i} className="w-[260px] shrink-0 snap-start">
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+              ))}
             {recentesQ.isError && (
-              <div className="col-span-full rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+              <div className="w-full rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
                 {(recentesQ.error as any)?.message ?? "Erro ao carregar ocorrências"}
               </div>
             )}
             {!recentesQ.isLoading &&
               recentes.map((o) => (
-                <RecentOccurrenceCard key={o.id} item={o} onClick={() => setOcorrenciaSel(o.id)} />
+                <div key={o.id} className="w-[260px] shrink-0 snap-start">
+                  <RecentOccurrenceCard item={o} onClick={() => setOcorrenciaSel(o.id)} />
+                </div>
               ))}
             {!recentesQ.isLoading && !recentesQ.isError && !recentes.length && (
-              <div className="col-span-full py-8 text-center text-sm text-muted-foreground">
+              <div className="w-full py-8 text-center text-sm text-muted-foreground">
                 Nenhuma ocorrência no período selecionado
               </div>
             )}
-          </div>
+          </HorizontalScroller>
 
         </DashboardCard>
       </section>
@@ -375,6 +438,10 @@ function Dashboard() {
           <MiniStat icon={AlertOctagon} label="RED" value={byRating.RED ?? 0} accent="var(--rating-red)" />
           <MiniStat icon={BellRing} label="Alertas Ativos" value={alertasAtivos} accent="var(--destructive)" />
           <MiniStat icon={DollarSign} label="Faturamento Total" value={brl(faturamentoTotal)} accent="var(--rating-trusted)" />
+        </div>
+
+        <div className="mt-4">
+          <FinancialPanel data={financeiroQ.data as any} isLoading={financeiroQ.isLoading} />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2 mt-4">

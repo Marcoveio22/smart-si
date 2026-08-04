@@ -14,17 +14,25 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUploadsRouteImport } from './routes/_authenticated/uploads'
+import { Route as AuthenticatedTreinamentosRouteImport } from './routes/_authenticated/treinamentos'
+import { Route as AuthenticatedSuporteIaRouteImport } from './routes/_authenticated/suporte-ia'
 import { Route as AuthenticatedProcessamentosRouteImport } from './routes/_authenticated/processamentos'
 import { Route as AuthenticatedOcorrenciasRouteImport } from './routes/_authenticated/ocorrencias'
+import { Route as AuthenticatedDicasRouteImport } from './routes/_authenticated/dicas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedConfiguracoesIndexRouteImport } from './routes/_authenticated/configuracoes.index'
+import { Route as AuthenticatedCobrancasIndexRouteImport } from './routes/_authenticated/cobrancas.index'
 import { Route as AuthenticatedConfiguracoesUsuariosRouteImport } from './routes/_authenticated/configuracoes.usuarios'
 import { Route as AuthenticatedConfiguracoesLojaRouteImport } from './routes/_authenticated/configuracoes.loja'
+import { Route as AuthenticatedCobrancasWhatsappRouteImport } from './routes/_authenticated/cobrancas.whatsapp'
+import { Route as AuthenticatedCobrancasPdfRouteImport } from './routes/_authenticated/cobrancas.pdf'
+import { Route as AuthenticatedCobrancasHistoricoRouteImport } from './routes/_authenticated/cobrancas.historico'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -52,6 +60,17 @@ const AuthenticatedUploadsRoute = AuthenticatedUploadsRouteImport.update({
   path: '/uploads',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedTreinamentosRoute =
+  AuthenticatedTreinamentosRouteImport.update({
+    id: '/treinamentos',
+    path: '/treinamentos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuporteIaRoute = AuthenticatedSuporteIaRouteImport.update({
+  id: '/suporte-ia',
+  path: '/suporte-ia',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedProcessamentosRoute =
   AuthenticatedProcessamentosRouteImport.update({
     id: '/processamentos',
@@ -64,6 +83,11 @@ const AuthenticatedOcorrenciasRoute =
     path: '/ocorrencias',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedDicasRoute = AuthenticatedDicasRouteImport.update({
+  id: '/dicas',
+  path: '/dicas',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -75,6 +99,11 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCobrancasRoute = AuthenticatedCobrancasRouteImport.update({
+  id: '/cobrancas',
+  path: '/cobrancas',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
@@ -103,6 +132,12 @@ const AuthenticatedConfiguracoesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedConfiguracoesRoute,
   } as any)
+const AuthenticatedCobrancasIndexRoute =
+  AuthenticatedCobrancasIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCobrancasRoute,
+  } as any)
 const AuthenticatedConfiguracoesUsuariosRoute =
   AuthenticatedConfiguracoesUsuariosRouteImport.update({
     id: '/usuarios',
@@ -114,6 +149,24 @@ const AuthenticatedConfiguracoesLojaRoute =
     id: '/loja',
     path: '/loja',
     getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
+const AuthenticatedCobrancasWhatsappRoute =
+  AuthenticatedCobrancasWhatsappRouteImport.update({
+    id: '/whatsapp',
+    path: '/whatsapp',
+    getParentRoute: () => AuthenticatedCobrancasRoute,
+  } as any)
+const AuthenticatedCobrancasPdfRoute =
+  AuthenticatedCobrancasPdfRouteImport.update({
+    id: '/pdf',
+    path: '/pdf',
+    getParentRoute: () => AuthenticatedCobrancasRoute,
+  } as any)
+const AuthenticatedCobrancasHistoricoRoute =
+  AuthenticatedCobrancasHistoricoRouteImport.update({
+    id: '/historico',
+    path: '/historico',
+    getParentRoute: () => AuthenticatedCobrancasRoute,
   } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
@@ -135,15 +188,23 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/clientes': typeof AuthenticatedClientesRoute
+  '/cobrancas': typeof AuthenticatedCobrancasRouteWithChildren
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dicas': typeof AuthenticatedDicasRoute
   '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/processamentos': typeof AuthenticatedProcessamentosRoute
+  '/suporte-ia': typeof AuthenticatedSuporteIaRoute
+  '/treinamentos': typeof AuthenticatedTreinamentosRoute
   '/uploads': typeof AuthenticatedUploadsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/cobrancas/historico': typeof AuthenticatedCobrancasHistoricoRoute
+  '/cobrancas/pdf': typeof AuthenticatedCobrancasPdfRoute
+  '/cobrancas/whatsapp': typeof AuthenticatedCobrancasWhatsappRoute
   '/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/cobrancas/': typeof AuthenticatedCobrancasIndexRoute
   '/configuracoes/': typeof AuthenticatedConfiguracoesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -155,13 +216,20 @@ export interface FileRoutesByTo {
   '/alertas': typeof AuthenticatedAlertasRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dicas': typeof AuthenticatedDicasRoute
   '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/processamentos': typeof AuthenticatedProcessamentosRoute
+  '/suporte-ia': typeof AuthenticatedSuporteIaRoute
+  '/treinamentos': typeof AuthenticatedTreinamentosRoute
   '/uploads': typeof AuthenticatedUploadsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/cobrancas/historico': typeof AuthenticatedCobrancasHistoricoRoute
+  '/cobrancas/pdf': typeof AuthenticatedCobrancasPdfRoute
+  '/cobrancas/whatsapp': typeof AuthenticatedCobrancasWhatsappRoute
   '/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/cobrancas': typeof AuthenticatedCobrancasIndexRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesIndexRoute
 }
 export interface FileRoutesById {
@@ -174,15 +242,23 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
+  '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRouteWithChildren
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/dicas': typeof AuthenticatedDicasRoute
   '/_authenticated/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/_authenticated/processamentos': typeof AuthenticatedProcessamentosRoute
+  '/_authenticated/suporte-ia': typeof AuthenticatedSuporteIaRoute
+  '/_authenticated/treinamentos': typeof AuthenticatedTreinamentosRoute
   '/_authenticated/uploads': typeof AuthenticatedUploadsRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/_authenticated/cobrancas/historico': typeof AuthenticatedCobrancasHistoricoRoute
+  '/_authenticated/cobrancas/pdf': typeof AuthenticatedCobrancasPdfRoute
+  '/_authenticated/cobrancas/whatsapp': typeof AuthenticatedCobrancasWhatsappRoute
   '/_authenticated/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/_authenticated/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/_authenticated/cobrancas/': typeof AuthenticatedCobrancasIndexRoute
   '/_authenticated/configuracoes/': typeof AuthenticatedConfiguracoesIndexRoute
 }
 export interface FileRouteTypes {
@@ -195,15 +271,23 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/alertas'
     | '/clientes'
+    | '/cobrancas'
     | '/configuracoes'
     | '/dashboard'
+    | '/dicas'
     | '/ocorrencias'
     | '/processamentos'
+    | '/suporte-ia'
+    | '/treinamentos'
     | '/uploads'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/cobrancas/historico'
+    | '/cobrancas/pdf'
+    | '/cobrancas/whatsapp'
     | '/configuracoes/loja'
     | '/configuracoes/usuarios'
+    | '/cobrancas/'
     | '/configuracoes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -215,13 +299,20 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/clientes'
     | '/dashboard'
+    | '/dicas'
     | '/ocorrencias'
     | '/processamentos'
+    | '/suporte-ia'
+    | '/treinamentos'
     | '/uploads'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/cobrancas/historico'
+    | '/cobrancas/pdf'
+    | '/cobrancas/whatsapp'
     | '/configuracoes/loja'
     | '/configuracoes/usuarios'
+    | '/cobrancas'
     | '/configuracoes'
   id:
     | '__root__'
@@ -233,15 +324,23 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/_authenticated/alertas'
     | '/_authenticated/clientes'
+    | '/_authenticated/cobrancas'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/dicas'
     | '/_authenticated/ocorrencias'
     | '/_authenticated/processamentos'
+    | '/_authenticated/suporte-ia'
+    | '/_authenticated/treinamentos'
     | '/_authenticated/uploads'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/_authenticated/cobrancas/historico'
+    | '/_authenticated/cobrancas/pdf'
+    | '/_authenticated/cobrancas/whatsapp'
     | '/_authenticated/configuracoes/loja'
     | '/_authenticated/configuracoes/usuarios'
+    | '/_authenticated/cobrancas/'
     | '/_authenticated/configuracoes/'
   fileRoutesById: FileRoutesById
 }
@@ -293,6 +392,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUploadsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/treinamentos': {
+      id: '/_authenticated/treinamentos'
+      path: '/treinamentos'
+      fullPath: '/treinamentos'
+      preLoaderRoute: typeof AuthenticatedTreinamentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suporte-ia': {
+      id: '/_authenticated/suporte-ia'
+      path: '/suporte-ia'
+      fullPath: '/suporte-ia'
+      preLoaderRoute: typeof AuthenticatedSuporteIaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/processamentos': {
       id: '/_authenticated/processamentos'
       path: '/processamentos'
@@ -307,6 +420,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOcorrenciasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/dicas': {
+      id: '/_authenticated/dicas'
+      path: '/dicas'
+      fullPath: '/dicas'
+      preLoaderRoute: typeof AuthenticatedDicasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -319,6 +439,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/configuracoes'
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cobrancas': {
+      id: '/_authenticated/cobrancas'
+      path: '/cobrancas'
+      fullPath: '/cobrancas'
+      preLoaderRoute: typeof AuthenticatedCobrancasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/clientes': {
@@ -356,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesIndexRouteImport
       parentRoute: typeof AuthenticatedConfiguracoesRoute
     }
+    '/_authenticated/cobrancas/': {
+      id: '/_authenticated/cobrancas/'
+      path: '/'
+      fullPath: '/cobrancas/'
+      preLoaderRoute: typeof AuthenticatedCobrancasIndexRouteImport
+      parentRoute: typeof AuthenticatedCobrancasRoute
+    }
     '/_authenticated/configuracoes/usuarios': {
       id: '/_authenticated/configuracoes/usuarios'
       path: '/usuarios'
@@ -369,6 +503,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/configuracoes/loja'
       preLoaderRoute: typeof AuthenticatedConfiguracoesLojaRouteImport
       parentRoute: typeof AuthenticatedConfiguracoesRoute
+    }
+    '/_authenticated/cobrancas/whatsapp': {
+      id: '/_authenticated/cobrancas/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/cobrancas/whatsapp'
+      preLoaderRoute: typeof AuthenticatedCobrancasWhatsappRouteImport
+      parentRoute: typeof AuthenticatedCobrancasRoute
+    }
+    '/_authenticated/cobrancas/pdf': {
+      id: '/_authenticated/cobrancas/pdf'
+      path: '/pdf'
+      fullPath: '/cobrancas/pdf'
+      preLoaderRoute: typeof AuthenticatedCobrancasPdfRouteImport
+      parentRoute: typeof AuthenticatedCobrancasRoute
+    }
+    '/_authenticated/cobrancas/historico': {
+      id: '/_authenticated/cobrancas/historico'
+      path: '/historico'
+      fullPath: '/cobrancas/historico'
+      preLoaderRoute: typeof AuthenticatedCobrancasHistoricoRouteImport
+      parentRoute: typeof AuthenticatedCobrancasRoute
     }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
@@ -386,6 +541,26 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedCobrancasRouteChildren {
+  AuthenticatedCobrancasHistoricoRoute: typeof AuthenticatedCobrancasHistoricoRoute
+  AuthenticatedCobrancasPdfRoute: typeof AuthenticatedCobrancasPdfRoute
+  AuthenticatedCobrancasWhatsappRoute: typeof AuthenticatedCobrancasWhatsappRoute
+  AuthenticatedCobrancasIndexRoute: typeof AuthenticatedCobrancasIndexRoute
+}
+
+const AuthenticatedCobrancasRouteChildren: AuthenticatedCobrancasRouteChildren =
+  {
+    AuthenticatedCobrancasHistoricoRoute: AuthenticatedCobrancasHistoricoRoute,
+    AuthenticatedCobrancasPdfRoute: AuthenticatedCobrancasPdfRoute,
+    AuthenticatedCobrancasWhatsappRoute: AuthenticatedCobrancasWhatsappRoute,
+    AuthenticatedCobrancasIndexRoute: AuthenticatedCobrancasIndexRoute,
+  }
+
+const AuthenticatedCobrancasRouteWithChildren =
+  AuthenticatedCobrancasRoute._addFileChildren(
+    AuthenticatedCobrancasRouteChildren,
+  )
 
 interface AuthenticatedConfiguracoesRouteChildren {
   AuthenticatedConfiguracoesLojaRoute: typeof AuthenticatedConfiguracoesLojaRoute
@@ -409,20 +584,28 @@ const AuthenticatedConfiguracoesRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
+  AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRouteWithChildren
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDicasRoute: typeof AuthenticatedDicasRoute
   AuthenticatedOcorrenciasRoute: typeof AuthenticatedOcorrenciasRoute
   AuthenticatedProcessamentosRoute: typeof AuthenticatedProcessamentosRoute
+  AuthenticatedSuporteIaRoute: typeof AuthenticatedSuporteIaRoute
+  AuthenticatedTreinamentosRoute: typeof AuthenticatedTreinamentosRoute
   AuthenticatedUploadsRoute: typeof AuthenticatedUploadsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
+  AuthenticatedCobrancasRoute: AuthenticatedCobrancasRouteWithChildren,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDicasRoute: AuthenticatedDicasRoute,
   AuthenticatedOcorrenciasRoute: AuthenticatedOcorrenciasRoute,
   AuthenticatedProcessamentosRoute: AuthenticatedProcessamentosRoute,
+  AuthenticatedSuporteIaRoute: AuthenticatedSuporteIaRoute,
+  AuthenticatedTreinamentosRoute: AuthenticatedTreinamentosRoute,
   AuthenticatedUploadsRoute: AuthenticatedUploadsRoute,
 }
 
