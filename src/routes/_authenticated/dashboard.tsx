@@ -266,7 +266,15 @@ function Dashboard() {
 
       {/* Linha 1 — indicadores */}
       <section>
+        {!statsReady ? (
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-[118px] w-full rounded-xl" />
+            ))}
+          </div>
+        ) : (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+
           <MetricCard
             icon={DollarSign} label="Faturamento do Dia" value={brl(faturamentoTotal)}
             delta={deltaFat} series={fatSeries} accent="var(--rating-trusted)" hint="acumulado do período"
