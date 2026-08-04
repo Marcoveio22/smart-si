@@ -24,6 +24,7 @@ import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticate
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedConfiguracoesIndexRouteImport } from './routes/_authenticated/configuracoes.index'
+import { Route as AuthenticatedCobrancasIndexRouteImport } from './routes/_authenticated/cobrancas.index'
 import { Route as AuthenticatedConfiguracoesUsuariosRouteImport } from './routes/_authenticated/configuracoes.usuarios'
 import { Route as AuthenticatedConfiguracoesLojaRouteImport } from './routes/_authenticated/configuracoes.loja'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -109,6 +110,12 @@ const AuthenticatedConfiguracoesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedConfiguracoesRoute,
   } as any)
+const AuthenticatedCobrancasIndexRoute =
+  AuthenticatedCobrancasIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCobrancasRoute,
+  } as any)
 const AuthenticatedConfiguracoesUsuariosRoute =
   AuthenticatedConfiguracoesUsuariosRouteImport.update({
     id: '/usuarios',
@@ -141,7 +148,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/clientes': typeof AuthenticatedClientesRoute
-  '/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/cobrancas': typeof AuthenticatedCobrancasRouteWithChildren
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/cobrancas/': typeof AuthenticatedCobrancasIndexRoute
   '/configuracoes/': typeof AuthenticatedConfiguracoesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -161,7 +169,6 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/clientes': typeof AuthenticatedClientesRoute
-  '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/ocorrencias': typeof AuthenticatedOcorrenciasRoute
   '/processamentos': typeof AuthenticatedProcessamentosRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/cobrancas': typeof AuthenticatedCobrancasIndexRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesIndexRoute
 }
 export interface FileRoutesById {
@@ -182,7 +190,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
-  '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRouteWithChildren
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/ocorrencias': typeof AuthenticatedOcorrenciasRoute
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/_authenticated/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/_authenticated/cobrancas/': typeof AuthenticatedCobrancasIndexRoute
   '/_authenticated/configuracoes/': typeof AuthenticatedConfiguracoesIndexRoute
 }
 export interface FileRouteTypes {
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/configuracoes/loja'
     | '/configuracoes/usuarios'
+    | '/cobrancas/'
     | '/configuracoes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -224,7 +234,6 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/alertas'
     | '/clientes'
-    | '/cobrancas'
     | '/dashboard'
     | '/ocorrencias'
     | '/processamentos'
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/configuracoes/loja'
     | '/configuracoes/usuarios'
+    | '/cobrancas'
     | '/configuracoes'
   id:
     | '__root__'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/configuracoes/loja'
     | '/_authenticated/configuracoes/usuarios'
+    | '/_authenticated/cobrancas/'
     | '/_authenticated/configuracoes/'
   fileRoutesById: FileRoutesById
 }
@@ -375,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesIndexRouteImport
       parentRoute: typeof AuthenticatedConfiguracoesRoute
     }
+    '/_authenticated/cobrancas/': {
+      id: '/_authenticated/cobrancas/'
+      path: '/'
+      fullPath: '/cobrancas/'
+      preLoaderRoute: typeof AuthenticatedCobrancasIndexRouteImport
+      parentRoute: typeof AuthenticatedCobrancasRoute
+    }
     '/_authenticated/configuracoes/usuarios': {
       id: '/_authenticated/configuracoes/usuarios'
       path: '/usuarios'
@@ -406,6 +424,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedCobrancasRouteChildren {
+  AuthenticatedCobrancasIndexRoute: typeof AuthenticatedCobrancasIndexRoute
+}
+
+const AuthenticatedCobrancasRouteChildren: AuthenticatedCobrancasRouteChildren =
+  {
+    AuthenticatedCobrancasIndexRoute: AuthenticatedCobrancasIndexRoute,
+  }
+
+const AuthenticatedCobrancasRouteWithChildren =
+  AuthenticatedCobrancasRoute._addFileChildren(
+    AuthenticatedCobrancasRouteChildren,
+  )
+
 interface AuthenticatedConfiguracoesRouteChildren {
   AuthenticatedConfiguracoesLojaRoute: typeof AuthenticatedConfiguracoesLojaRoute
   AuthenticatedConfiguracoesUsuariosRoute: typeof AuthenticatedConfiguracoesUsuariosRoute
@@ -428,7 +460,7 @@ const AuthenticatedConfiguracoesRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
-  AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
+  AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRouteWithChildren
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOcorrenciasRoute: typeof AuthenticatedOcorrenciasRoute
@@ -439,7 +471,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
-  AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,
+  AuthenticatedCobrancasRoute: AuthenticatedCobrancasRouteWithChildren,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOcorrenciasRoute: AuthenticatedOcorrenciasRoute,
