@@ -29,7 +29,6 @@ import { RecentOccurrenceCard, type RecentOccurrence } from "@/components/dashbo
 import { RecurringClientModal, type RecurringClientRow } from "@/components/dashboard/RecurringClientModal";
 import { OccurrenceDetailsModal } from "@/components/dashboard/OccurrenceDetailsModal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent as CardBody } from "@/components/ui/card";
 import { RecoveredHighlightCard } from "@/components/dashboard/RecoveredHighlightCard";
 import { HorizontalScroller } from "@/components/dashboard/HorizontalScroller";
 import { supabase } from "@/integrations/supabase/client";
@@ -307,7 +306,7 @@ function Dashboard() {
               <Link to="/clientes">Ver todos <ArrowRight className="h-3 w-3" /></Link>
             </Button>
           </div>
-          <CardBody className="p-3">
+          <CardContent className="p-3">
             <div className="space-y-1">
               {recorrentesQ.isLoading && [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
               {recorrentesQ.isError && (
@@ -323,7 +322,7 @@ function Dashboard() {
                 <div className="py-8 text-center text-sm text-muted-foreground">Sem clientes recorrentes no período</div>
               )}
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
 
         <RecoveredHighlightCard
