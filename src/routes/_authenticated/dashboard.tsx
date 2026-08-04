@@ -297,7 +297,9 @@ function Dashboard() {
             delta={null} accent="var(--accent)" hint="valor recuperado / perdido"
           />
         </div>
+        )}
       </section>
+
 
       {/* Linha 2 — 3 colunas */}
       <section className="grid gap-4 grid-cols-1 lg:grid-cols-3">
