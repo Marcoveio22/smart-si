@@ -25,20 +25,21 @@ export function MetricCard({ icon: Icon, label, value, delta = null, series = []
   return (
     <Card className="border-border/70 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
       <CardContent className="p-4 space-y-3">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+          <div
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
+            style={{ background: `color-mix(in oklab, ${color} 14%, transparent)`, color }}
+          >
+            <Icon className="h-5 w-5" />
+          </div>
           <div className="min-w-0">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+            <div className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {label}
             </div>
-            <div className="mt-1 text-xl font-bold truncate">{value}</div>
-          </div>
-          <div
-            className="h-9 w-9 shrink-0 rounded-lg flex items-center justify-center"
-            style={{ background: `color-mix(in oklab, ${color} 16%, transparent)`, color }}
-          >
-            <Icon className="h-4 w-4" />
+            <div className="mt-0.5 truncate text-2xl font-extrabold tracking-tight">{value}</div>
           </div>
         </div>
+
 
         <div className="flex items-center gap-2">
           <span
