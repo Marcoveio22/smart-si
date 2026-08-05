@@ -9,36 +9,40 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedUploadsRouteImport } from './routes/_authenticated/uploads'
-import { Route as AuthenticatedTreinamentosRouteImport } from './routes/_authenticated/treinamentos'
-import { Route as AuthenticatedSuporteIaRouteImport } from './routes/_authenticated/suporte-ia'
-import { Route as AuthenticatedProcessamentosRouteImport } from './routes/_authenticated/processamentos'
-import { Route as AuthenticatedOcorrenciasRouteImport } from './routes/_authenticated/ocorrencias'
-import { Route as AuthenticatedDicasRouteImport } from './routes/_authenticated/dicas'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
-import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
-import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
-import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as AuthenticatedConfiguracoesIndexRouteImport } from './routes/_authenticated/configuracoes.index'
-import { Route as AuthenticatedCobrancasIndexRouteImport } from './routes/_authenticated/cobrancas.index'
-import { Route as AuthenticatedConfiguracoesUsuariosRouteImport } from './routes/_authenticated/configuracoes.usuarios'
-import { Route as AuthenticatedConfiguracoesLojaRouteImport } from './routes/_authenticated/configuracoes.loja'
-import { Route as AuthenticatedCobrancasWhatsappRouteImport } from './routes/_authenticated/cobrancas.whatsapp'
-import { Route as AuthenticatedCobrancasPdfRouteImport } from './routes/_authenticated/cobrancas.pdf'
-import { Route as AuthenticatedCobrancasHistoricoRouteImport } from './routes/_authenticated/cobrancas.historico'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
+import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDicasRouteImport } from './routes/_authenticated/dicas'
+import { Route as AuthenticatedOcorrenciasRouteImport } from './routes/_authenticated/ocorrencias'
+import { Route as AuthenticatedProcessamentosRouteImport } from './routes/_authenticated/processamentos'
+import { Route as AuthenticatedSuporteIaRouteImport } from './routes/_authenticated/suporte-ia'
+import { Route as AuthenticatedTreinamentosRouteImport } from './routes/_authenticated/treinamentos'
+import { Route as AuthenticatedUploadsRouteImport } from './routes/_authenticated/uploads'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedCobrancasIndexRouteImport } from './routes/_authenticated/cobrancas.index'
+import { Route as AuthenticatedCobrancasHistoricoRouteImport } from './routes/_authenticated/cobrancas.historico'
+import { Route as AuthenticatedCobrancasPdfRouteImport } from './routes/_authenticated/cobrancas.pdf'
+import { Route as AuthenticatedCobrancasWhatsappRouteImport } from './routes/_authenticated/cobrancas.whatsapp'
+import { Route as AuthenticatedConfiguracoesIndexRouteImport } from './routes/_authenticated/configuracoes.index'
+import { Route as AuthenticatedConfiguracoesLojaRouteImport } from './routes/_authenticated/configuracoes.loja'
+import { Route as AuthenticatedConfiguracoesUsuariosRouteImport } from './routes/_authenticated/configuracoes.usuarios'
 
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -46,51 +50,36 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedUploadsRoute = AuthenticatedUploadsRouteImport.update({
-  id: '/uploads',
-  path: '/uploads',
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
+  id: '/alertas',
+  path: '/alertas',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedTreinamentosRoute =
-  AuthenticatedTreinamentosRouteImport.update({
-    id: '/treinamentos',
-    path: '/treinamentos',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSuporteIaRoute = AuthenticatedSuporteIaRouteImport.update({
-  id: '/suporte-ia',
-  path: '/suporte-ia',
+const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedProcessamentosRoute =
-  AuthenticatedProcessamentosRouteImport.update({
-    id: '/processamentos',
-    path: '/processamentos',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedOcorrenciasRoute =
-  AuthenticatedOcorrenciasRouteImport.update({
-    id: '/ocorrencias',
-    path: '/ocorrencias',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDicasRoute = AuthenticatedDicasRouteImport.update({
-  id: '/dicas',
-  path: '/dicas',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedCobrancasRoute = AuthenticatedCobrancasRouteImport.update({
+  id: '/cobrancas',
+  path: '/cobrancas',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedConfiguracoesRoute =
@@ -99,67 +88,59 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCobrancasRoute = AuthenticatedCobrancasRouteImport.update({
-  id: '/cobrancas',
-  path: '/cobrancas',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
-  id: '/clientes',
-  path: '/clientes',
+const AuthenticatedDicasRoute = AuthenticatedDicasRouteImport.update({
+  id: '/dicas',
+  path: '/dicas',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
-  id: '/alertas',
-  path: '/alertas',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedOcorrenciasRoute =
+  AuthenticatedOcorrenciasRouteImport.update({
+    id: '/ocorrencias',
+    path: '/ocorrencias',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedProcessamentosRoute =
+  AuthenticatedProcessamentosRouteImport.update({
+    id: '/processamentos',
+    path: '/processamentos',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedConfiguracoesIndexRoute =
-  AuthenticatedConfiguracoesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+const AuthenticatedSuporteIaRoute = AuthenticatedSuporteIaRouteImport.update({
+  id: '/suporte-ia',
+  path: '/suporte-ia',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedTreinamentosRoute =
+  AuthenticatedTreinamentosRouteImport.update({
+    id: '/treinamentos',
+    path: '/treinamentos',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedUploadsRoute = AuthenticatedUploadsRouteImport.update({
+  id: '/uploads',
+  path: '/uploads',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedCobrancasIndexRoute =
   AuthenticatedCobrancasIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedCobrancasRoute,
-  } as any)
-const AuthenticatedConfiguracoesUsuariosRoute =
-  AuthenticatedConfiguracoesUsuariosRouteImport.update({
-    id: '/usuarios',
-    path: '/usuarios',
-    getParentRoute: () => AuthenticatedConfiguracoesRoute,
-  } as any)
-const AuthenticatedConfiguracoesLojaRoute =
-  AuthenticatedConfiguracoesLojaRouteImport.update({
-    id: '/loja',
-    path: '/loja',
-    getParentRoute: () => AuthenticatedConfiguracoesRoute,
-  } as any)
-const AuthenticatedCobrancasWhatsappRoute =
-  AuthenticatedCobrancasWhatsappRouteImport.update({
-    id: '/whatsapp',
-    path: '/whatsapp',
-    getParentRoute: () => AuthenticatedCobrancasRoute,
-  } as any)
-const AuthenticatedCobrancasPdfRoute =
-  AuthenticatedCobrancasPdfRouteImport.update({
-    id: '/pdf',
-    path: '/pdf',
     getParentRoute: () => AuthenticatedCobrancasRoute,
   } as any)
 const AuthenticatedCobrancasHistoricoRoute =
@@ -168,17 +149,36 @@ const AuthenticatedCobrancasHistoricoRoute =
     path: '/historico',
     getParentRoute: () => AuthenticatedCobrancasRoute,
   } as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedCobrancasPdfRoute =
+  AuthenticatedCobrancasPdfRouteImport.update({
+    id: '/pdf',
+    path: '/pdf',
+    getParentRoute: () => AuthenticatedCobrancasRoute,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
+const AuthenticatedCobrancasWhatsappRoute =
+  AuthenticatedCobrancasWhatsappRouteImport.update({
+    id: '/whatsapp',
+    path: '/whatsapp',
+    getParentRoute: () => AuthenticatedCobrancasRoute,
+  } as any)
+const AuthenticatedConfiguracoesIndexRoute =
+  AuthenticatedConfiguracoesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
+const AuthenticatedConfiguracoesLojaRoute =
+  AuthenticatedConfiguracoesLojaRouteImport.update({
+    id: '/loja',
+    path: '/loja',
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
+const AuthenticatedConfiguracoesUsuariosRoute =
+  AuthenticatedConfiguracoesUsuariosRouteImport.update({
+    id: '/usuarios',
+    path: '/usuarios',
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -357,18 +357,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -378,95 +371,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/uploads': {
-      id: '/_authenticated/uploads'
-      path: '/uploads'
-      fullPath: '/uploads'
-      preLoaderRoute: typeof AuthenticatedUploadsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/treinamentos': {
-      id: '/_authenticated/treinamentos'
-      path: '/treinamentos'
-      fullPath: '/treinamentos'
-      preLoaderRoute: typeof AuthenticatedTreinamentosRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/suporte-ia': {
-      id: '/_authenticated/suporte-ia'
-      path: '/suporte-ia'
-      fullPath: '/suporte-ia'
-      preLoaderRoute: typeof AuthenticatedSuporteIaRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/processamentos': {
-      id: '/_authenticated/processamentos'
-      path: '/processamentos'
-      fullPath: '/processamentos'
-      preLoaderRoute: typeof AuthenticatedProcessamentosRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/ocorrencias': {
-      id: '/_authenticated/ocorrencias'
-      path: '/ocorrencias'
-      fullPath: '/ocorrencias'
-      preLoaderRoute: typeof AuthenticatedOcorrenciasRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dicas': {
-      id: '/_authenticated/dicas'
-      path: '/dicas'
-      fullPath: '/dicas'
-      preLoaderRoute: typeof AuthenticatedDicasRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/configuracoes': {
-      id: '/_authenticated/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/configuracoes'
-      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/cobrancas': {
-      id: '/_authenticated/cobrancas'
-      path: '/cobrancas'
-      fullPath: '/cobrancas'
-      preLoaderRoute: typeof AuthenticatedCobrancasRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/clientes': {
-      id: '/_authenticated/clientes'
-      path: '/clientes'
-      fullPath: '/clientes'
-      preLoaderRoute: typeof AuthenticatedClientesRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/alertas': {
-      id: '/_authenticated/alertas'
-      path: '/alertas'
-      fullPath: '/alertas'
-      preLoaderRoute: typeof AuthenticatedAlertasRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -476,46 +392,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/configuracoes/': {
-      id: '/_authenticated/configuracoes/'
-      path: '/'
-      fullPath: '/configuracoes/'
-      preLoaderRoute: typeof AuthenticatedConfiguracoesIndexRouteImport
-      parentRoute: typeof AuthenticatedConfiguracoesRoute
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/alertas': {
+      id: '/_authenticated/alertas'
+      path: '/alertas'
+      fullPath: '/alertas'
+      preLoaderRoute: typeof AuthenticatedAlertasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/clientes': {
+      id: '/_authenticated/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof AuthenticatedClientesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/cobrancas': {
+      id: '/_authenticated/cobrancas'
+      path: '/cobrancas'
+      fullPath: '/cobrancas'
+      preLoaderRoute: typeof AuthenticatedCobrancasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dicas': {
+      id: '/_authenticated/dicas'
+      path: '/dicas'
+      fullPath: '/dicas'
+      preLoaderRoute: typeof AuthenticatedDicasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ocorrencias': {
+      id: '/_authenticated/ocorrencias'
+      path: '/ocorrencias'
+      fullPath: '/ocorrencias'
+      preLoaderRoute: typeof AuthenticatedOcorrenciasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/processamentos': {
+      id: '/_authenticated/processamentos'
+      path: '/processamentos'
+      fullPath: '/processamentos'
+      preLoaderRoute: typeof AuthenticatedProcessamentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/suporte-ia': {
+      id: '/_authenticated/suporte-ia'
+      path: '/suporte-ia'
+      fullPath: '/suporte-ia'
+      preLoaderRoute: typeof AuthenticatedSuporteIaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/treinamentos': {
+      id: '/_authenticated/treinamentos'
+      path: '/treinamentos'
+      fullPath: '/treinamentos'
+      preLoaderRoute: typeof AuthenticatedTreinamentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/uploads': {
+      id: '/_authenticated/uploads'
+      path: '/uploads'
+      fullPath: '/uploads'
+      preLoaderRoute: typeof AuthenticatedUploadsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/cobrancas/': {
       id: '/_authenticated/cobrancas/'
       path: '/'
       fullPath: '/cobrancas/'
       preLoaderRoute: typeof AuthenticatedCobrancasIndexRouteImport
-      parentRoute: typeof AuthenticatedCobrancasRoute
-    }
-    '/_authenticated/configuracoes/usuarios': {
-      id: '/_authenticated/configuracoes/usuarios'
-      path: '/usuarios'
-      fullPath: '/configuracoes/usuarios'
-      preLoaderRoute: typeof AuthenticatedConfiguracoesUsuariosRouteImport
-      parentRoute: typeof AuthenticatedConfiguracoesRoute
-    }
-    '/_authenticated/configuracoes/loja': {
-      id: '/_authenticated/configuracoes/loja'
-      path: '/loja'
-      fullPath: '/configuracoes/loja'
-      preLoaderRoute: typeof AuthenticatedConfiguracoesLojaRouteImport
-      parentRoute: typeof AuthenticatedConfiguracoesRoute
-    }
-    '/_authenticated/cobrancas/whatsapp': {
-      id: '/_authenticated/cobrancas/whatsapp'
-      path: '/whatsapp'
-      fullPath: '/cobrancas/whatsapp'
-      preLoaderRoute: typeof AuthenticatedCobrancasWhatsappRouteImport
-      parentRoute: typeof AuthenticatedCobrancasRoute
-    }
-    '/_authenticated/cobrancas/pdf': {
-      id: '/_authenticated/cobrancas/pdf'
-      path: '/pdf'
-      fullPath: '/cobrancas/pdf'
-      preLoaderRoute: typeof AuthenticatedCobrancasPdfRouteImport
       parentRoute: typeof AuthenticatedCobrancasRoute
     }
     '/_authenticated/cobrancas/historico': {
@@ -525,19 +504,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCobrancasHistoricoRouteImport
       parentRoute: typeof AuthenticatedCobrancasRoute
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/cobrancas/pdf': {
+      id: '/_authenticated/cobrancas/pdf'
+      path: '/pdf'
+      fullPath: '/cobrancas/pdf'
+      preLoaderRoute: typeof AuthenticatedCobrancasPdfRouteImport
+      parentRoute: typeof AuthenticatedCobrancasRoute
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/cobrancas/whatsapp': {
+      id: '/_authenticated/cobrancas/whatsapp'
+      path: '/whatsapp'
+      fullPath: '/cobrancas/whatsapp'
+      preLoaderRoute: typeof AuthenticatedCobrancasWhatsappRouteImport
+      parentRoute: typeof AuthenticatedCobrancasRoute
+    }
+    '/_authenticated/configuracoes/': {
+      id: '/_authenticated/configuracoes/'
+      path: '/'
+      fullPath: '/configuracoes/'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesIndexRouteImport
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
+    }
+    '/_authenticated/configuracoes/loja': {
+      id: '/_authenticated/configuracoes/loja'
+      path: '/loja'
+      fullPath: '/configuracoes/loja'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesLojaRouteImport
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
+    }
+    '/_authenticated/configuracoes/usuarios': {
+      id: '/_authenticated/configuracoes/usuarios'
+      path: '/usuarios'
+      fullPath: '/configuracoes/usuarios'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesUsuariosRouteImport
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
     }
   }
 }
