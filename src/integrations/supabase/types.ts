@@ -1249,6 +1249,7 @@ export type Database = {
         Returns: undefined
       }
       bootstrap_admin_self: { Args: never; Returns: boolean }
+      can_access_excel_object: { Args: { _name: string }; Returns: boolean }
       current_loja_id: { Args: never; Returns: string }
       dashboard_horarios: {
         Args: { _from?: string; _loja_id?: string; _to?: string }
