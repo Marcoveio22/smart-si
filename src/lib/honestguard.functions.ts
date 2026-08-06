@@ -237,7 +237,10 @@ export const processarArquivos = createServerFn({ method: "POST" })
         else if (rating === "RED") cRed++;
 
         const { data: existing } = await supabaseAdmin
-          .from("clientes").select("id, rating_final, status_manual").eq("numero_cartao", cartao).maybeSingle();
+          .from("clientes").select("id, rating_final, status_manual")
+          .eq("numero_cartao", cartao)
+          .eq("loja_id", defaultLoja)
+          .maybeSingle();
 
         const statusManual = ((existing as any)?.status_manual as string | undefined) ?? "NEUTRO";
         ratingByCartao.set(cartao, { rating, score, trusted: isTrusted, ocorrencias, totalGasto, totalCompras, statusManual });
