@@ -4,7 +4,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TenantProvider, useTenant } from "@/hooks/useTenant";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShieldCheck, Store } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ShieldCheck, Store, Clock } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { bootstrapAdminSelf } from "@/lib/tenant.functions";
 import { useEffect } from "react";
@@ -23,27 +25,20 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthedLayout() {
   return (
     <TenantProvider>
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full bg-background">
-          <AppSidebar />
-          <div className="flex-1 flex flex-col min-w-0">
-            <TopHeader />
-            <main className="flex-1 p-6 overflow-auto">
-              <Outlet />
-            </main>
-          </div>
-        </div>
-      </SidebarProvider>
+      <TenantGate />
     </TenantProvider>
   );
 }
 
-function TopHeader() {
-  const { tenant, selectedLojaId, setSelectedLojaId } = useTenant();
+// Runs the first-run admin bootstrap BEFORE deciding whether to show the
+// "aguardando liberação" screen — since a new signup now has zero lojas by
+// default (C2), if bootstrap only ran inside the normal layout, the very
+// first user could get stuck behind the gate and never become admin.
+function TenantGate() {
+  const { tenant, isLoading } = useTenant();
   const qc = useQueryClient();
   const bootstrap = useServerFn(bootstrapAdminSelf);
 
-  // First-run: if no admin exists, promote the very first signed-in user.
   useEffect(() => {
     if (!tenant || tenant.isAdmin) return;
     bootstrap().then((r) => {
@@ -52,6 +47,63 @@ function TopHeader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenant?.userId]);
 
+  if (isLoading) return null;
+
+  if (tenant && !tenant.isAdmin && tenant.lojas.length === 0) {
+    return <AguardandoLiberacao email={tenant.email} />;
+  }
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopHeader />
+          <main className="flex-1 p-6 overflow-auto">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+function AguardandoLiberacao({ email }: { email: string | null }) {
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/auth";
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="max-w-md w-full p-8 text-center space-y-4">
+        <div className="mx-auto h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+          <Clock className="h-6 w-6" />
+        </div>
+        <h1 className="text-xl font-bold">Aguardando liberação</h1>
+        <p className="text-sm text-muted-foreground">
+          Sua conta{email ? ` (${email})` : ""} foi criada com sucesso, mas ainda não está
+          vinculada a nenhuma loja. Um administrador precisa liberar seu acesso antes que você
+          possa usar o Smart SI.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Assim que a liberação for feita, atualize esta página para continuar.
+        </p>
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Button onClick={() => window.location.reload()}>
+            Atualizar
+          </Button>
+          <Button variant="outline" onClick={handleSignOut}>
+            Sair
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function TopHeader() {
+  const { tenant, selectedLojaId, setSelectedLojaId } = useTenant();
   const isAdmin = !!tenant?.isAdmin;
   const showSelector = isAdmin || (tenant?.lojas.length ?? 0) > 1;
   const currentLoja = tenant?.lojas.find((l) => l.id === selectedLojaId) ?? null;
