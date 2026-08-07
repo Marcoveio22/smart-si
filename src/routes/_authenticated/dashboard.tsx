@@ -423,6 +423,26 @@ function Dashboard() {
         </DashboardCard>
       </section>
 
+      {/* Gamificação — clientes confiáveis marcados no PDV */}
+      <section>
+        <Card className="border-[var(--rating-trusted)]/30 bg-[var(--rating-trusted)]/5">
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-[var(--rating-trusted)]/15 text-[var(--rating-trusted)] flex items-center justify-center shrink-0">
+              <Trophy className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-lg font-bold">
+                Você tem {byStatusManual.TRUSTED ?? 0} cliente{(byStatusManual.TRUSTED ?? 0) === 1 ? "" : "s"} marcado{(byStatusManual.TRUSTED ?? 0) === 1 ? "" : "s"} como confiável no seu PDV
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Menos gente pra ficar de olho, mais tempo livre no seu monitoramento. Continue marcando quem já provou ser confiável.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+
       {/* Análise detalhada — conteúdo original preservado */}
       <section>
         <SectionHeader title="Análise detalhada" description="Indicadores completos da base de clientes" />

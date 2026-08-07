@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 type Row = Record<string, any>;
 
@@ -331,6 +331,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const monitoramentoAOA: any[][] = [
         ["Data/Hora", "Produto", "Tipo", "Rating Final", "Status Manual", "TRUSTED"],
       ];
+      const linhasConfiaveis: number[] = []; // índices de linha (0-based) marcadas para destaque amarelo
       let lastKey: string | null = null;
       for (const t of transacoes) {
         const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", trusted: false, statusManual: "NEUTRO" } as any;
@@ -339,6 +340,8 @@ export const processarArquivos = createServerFn({ method: "POST" })
         if (lastKey !== null && key !== lastKey) {
           monitoramentoAOA.push(["", "", "", "", "", ""], ["", "", "", "", "", ""], ["", "", "", "", "", ""]);
         }
+        const isTrustedRow = r.trusted || r.statusManual === "TRUSTED";
+        if (isTrustedRow) linhasConfiaveis.push(monitoramentoAOA.length);
         monitoramentoAOA.push([dh, t.produto, t.tipo, r.rating, r.statusManual ?? "NEUTRO", r.trusted ? "SIM" : "NÃO"]);
         lastKey = key;
       }
