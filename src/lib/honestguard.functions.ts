@@ -371,7 +371,15 @@ export const processarArquivos = createServerFn({ method: "POST" })
       applyBRL(wsEnriq, ["Valor"]);
       XLSX.utils.book_append_sheet(wb, wsEnriq, "BASE_DIARIA_ENRIQUECIDA");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(alertasSheet.length ? alertasSheet : [{ info: "Nenhum alerta" }]), "ALERTAS");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monitoramentoAOA), "MONITORAMENTO");
+      const wsMonitoramento = XLSX.utils.aoa_to_sheet(monitoramentoAOA);
+      const AMARELO_CONFIAVEL = { fill: { patternType: "solid", fgColor: { rgb: "FFFDE68A" } } };
+      for (const rowIdx of linhasConfiaveis) {
+        for (let col = 0; col < 6; col++) {
+          const addr = XLSX.utils.encode_cell({ r: rowIdx, c: col });
+          if (wsMonitoramento[addr]) wsMonitoramento[addr].s = AMARELO_CONFIAVEL;
+        }
+      }
+      XLSX.utils.book_append_sheet(wb, wsMonitoramento, "MONITORAMENTO");
       const wsClient = XLSX.utils.json_to_sheet(clientesClassif.length ? clientesClassif : [{ info: "Sem clientes identificados" }]);
       applyBRL(wsClient, ["total_gasto"]);
       XLSX.utils.book_append_sheet(wb, wsClient, "CLIENTES_CLASSIFICADOS");
