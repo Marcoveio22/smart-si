@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 type Row = Record<string, any>;
 
@@ -331,6 +331,7 @@ export const processarArquivos = createServerFn({ method: "POST" })
       const monitoramentoAOA: any[][] = [
         ["Data/Hora", "Produto", "Tipo", "Rating Final", "Status Manual", "TRUSTED"],
       ];
+      const linhasConfiaveis: number[] = []; // índices de linha (0-based) marcadas para destaque amarelo
       let lastKey: string | null = null;
       for (const t of transacoes) {
         const r = ratingByCartao.get(t.numero_cartao) ?? { rating: "SILVER", trusted: false, statusManual: "NEUTRO" } as any;
@@ -339,6 +340,8 @@ export const processarArquivos = createServerFn({ method: "POST" })
         if (lastKey !== null && key !== lastKey) {
           monitoramentoAOA.push(["", "", "", "", "", ""], ["", "", "", "", "", ""], ["", "", "", "", "", ""]);
         }
+        const isTrustedRow = r.trusted || r.statusManual === "TRUSTED";
+        if (isTrustedRow) linhasConfiaveis.push(monitoramentoAOA.length);
         monitoramentoAOA.push([dh, t.produto, t.tipo, r.rating, r.statusManual ?? "NEUTRO", r.trusted ? "SIM" : "NÃO"]);
         lastKey = key;
       }
@@ -368,7 +371,15 @@ export const processarArquivos = createServerFn({ method: "POST" })
       applyBRL(wsEnriq, ["Valor"]);
       XLSX.utils.book_append_sheet(wb, wsEnriq, "BASE_DIARIA_ENRIQUECIDA");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(alertasSheet.length ? alertasSheet : [{ info: "Nenhum alerta" }]), "ALERTAS");
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(monitoramentoAOA), "MONITORAMENTO");
+      const wsMonitoramento = XLSX.utils.aoa_to_sheet(monitoramentoAOA);
+      const AMARELO_CONFIAVEL = { fill: { patternType: "solid", fgColor: { rgb: "FFFDE68A" } } };
+      for (const rowIdx of linhasConfiaveis) {
+        for (let col = 0; col < 6; col++) {
+          const addr = XLSX.utils.encode_cell({ r: rowIdx, c: col });
+          if (wsMonitoramento[addr]) wsMonitoramento[addr].s = AMARELO_CONFIAVEL;
+        }
+      }
+      XLSX.utils.book_append_sheet(wb, wsMonitoramento, "MONITORAMENTO");
       const wsClient = XLSX.utils.json_to_sheet(clientesClassif.length ? clientesClassif : [{ info: "Sem clientes identificados" }]);
       applyBRL(wsClient, ["total_gasto"]);
       XLSX.utils.book_append_sheet(wb, wsClient, "CLIENTES_CLASSIFICADOS");
