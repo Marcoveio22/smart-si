@@ -6,6 +6,7 @@ import { getOcorrencias, createCobranca } from "@/lib/api/ocorrencias.functions"
 import { queryKeys } from "@/lib/api/queryKeys";
 import { DashboardCard } from "./DashboardCard";
 import { QuickActionCard, type QuickAction } from "./QuickActionCard";
+import { WhatsAppChargeDialog } from "./WhatsAppChargeDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,7 @@ import { cobrancaPDF } from "@/lib/export";
 import { toast } from "sonner";
 import type { DashboardFilters } from "@/lib/api/filters";
 
-type Mode = "whatsapp" | "pdf" | null;
+type Mode = "pdf" | null;
 
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -38,9 +39,9 @@ export function QuickActionsPanel({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<Mode>(null);
+  const [waOpen, setWaOpen] = useState(false);
   const [ocorrenciaId, setOcorrenciaId] = useState<string>("");
   const [valor, setValor] = useState<string>("");
-  const [telefone, setTelefone] = useState<string>("");
   const [observacao, setObservacao] = useState<string>("");
 
   const fetchOcorrencias = useServerFn(getOcorrencias);
@@ -61,7 +62,6 @@ export function QuickActionsPanel({
     setMode(null);
     setOcorrenciaId("");
     setValor("");
-    setTelefone("");
     setObservacao("");
   };
 
@@ -71,43 +71,26 @@ export function QuickActionsPanel({
       const valorNum = Number(valor.replace(/\./g, "").replace(",", ".")) || Number(selecionada.valor_perdido ?? 0);
       if (!valorNum) throw new Error("Informe o valor da cobrança.");
 
-      if (mode === "pdf") {
-        await cobrancaPDF({
-          loja: selecionada.loja_nome ?? "—",
-          cartao: selecionada.numero_cartao ?? "—",
-          descricao: selecionada.descricao ?? selecionada.tipo ?? "Ocorrência registrada",
-          valor: valorNum,
-          data: new Date(selecionada.data_ocorrencia).toLocaleString("pt-BR"),
-          observacao: observacao || undefined,
-        });
-      }
+      await cobrancaPDF({
+        loja: selecionada.loja_nome ?? "—",
+        cartao: selecionada.numero_cartao ?? "—",
+        descricao: selecionada.descricao ?? selecionada.tipo ?? "Ocorrência registrada",
+        valor: valorNum,
+        data: new Date(selecionada.data_ocorrencia).toLocaleString("pt-BR"),
+        observacao: observacao || undefined,
+      });
 
       await novaCobranca({
         data: {
           ocorrenciaId: selecionada.id,
           clienteId: selecionada.cliente_id ?? null,
           valor: valorNum,
-          formaEnvio: mode === "whatsapp" ? "WhatsApp" : "PDF",
+          formaEnvio: "PDF",
           dataEnvio: new Date().toISOString(),
-          whatsappEnviado: mode === "whatsapp",
+          whatsappEnviado: false,
           observacao: observacao || null,
         },
       });
-
-      if (mode === "whatsapp") {
-        const texto = [
-          "Olá! Identificamos uma ocorrência em nossa loja autônoma.",
-          `Cartão: ${selecionada.numero_cartao ?? "—"}`,
-          `Data: ${new Date(selecionada.data_ocorrencia).toLocaleString("pt-BR")}`,
-          `Valor devido: ${brl(valorNum)}`,
-          observacao ? `Obs.: ${observacao}` : "",
-          "Pedimos a gentileza de regularizar o valor com a administração.",
-        ]
-          .filter(Boolean)
-          .join("\n");
-        const fone = telefone.replace(/\D/g, "");
-        window.open(`https://wa.me/${fone ? `55${fone}` : ""}?text=${encodeURIComponent(texto)}`, "_blank");
-      }
     },
     onSuccess: () => {
       toast.success("Cobrança registrada com sucesso.");
@@ -122,7 +105,7 @@ export function QuickActionsPanel({
       icon: MessageCircle,
       label: "Gerar cobrança via WhatsApp",
       hint: "Enviar notificação de cobrança",
-      onClick: () => setMode("whatsapp"),
+      onClick: () => setWaOpen(true),
       accent: "var(--rating-trusted)",
     },
     {
@@ -158,10 +141,17 @@ export function QuickActionsPanel({
         </div>
       </DashboardCard>
 
+      <WhatsAppChargeDialog
+        open={waOpen}
+        onOpenChange={setWaOpen}
+        filters={filters}
+        onDone={() => queryClient.invalidateQueries({ queryKey: ["dashboard"] })}
+      />
+
       <Dialog open={mode !== null} onOpenChange={(o) => !o && reset()}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{mode === "whatsapp" ? "Cobrança via WhatsApp" : "Cobrança em PDF"}</DialogTitle>
+            <DialogTitle>Cobrança em PDF</DialogTitle>
             <DialogDescription>
               A cobrança é registrada no financeiro e vinculada à ocorrência selecionada.
             </DialogDescription>
@@ -170,11 +160,14 @@ export function QuickActionsPanel({
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label>Ocorrência</Label>
-              <Select value={ocorrenciaId} onValueChange={(v) => {
-                setOcorrenciaId(v);
-                const o = ocorrencias.find((x) => x.id === v);
-                if (o?.valor_perdido) setValor(String(Number(o.valor_perdido).toFixed(2)).replace(".", ","));
-              }}>
+              <Select
+                value={ocorrenciaId}
+                onValueChange={(v) => {
+                  setOcorrenciaId(v);
+                  const o = ocorrencias.find((x) => x.id === v);
+                  if (o?.valor_perdido) setValor(String(Number(o.valor_perdido).toFixed(2)).replace(".", ","));
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={isLoading ? "Carregando…" : "Selecione a ocorrência"} />
                 </SelectTrigger>
@@ -192,17 +185,9 @@ export function QuickActionsPanel({
               </Select>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Valor (R$)</Label>
-                <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" inputMode="decimal" />
-              </div>
-              {mode === "whatsapp" && (
-                <div className="space-y-1.5">
-                  <Label>Telefone (DDD + número)</Label>
-                  <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="11999999999" inputMode="tel" />
-                </div>
-              )}
+            <div className="space-y-1.5">
+              <Label>Valor (R$)</Label>
+              <Input value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" inputMode="decimal" />
             </div>
 
             <div className="space-y-1.5">
@@ -217,7 +202,7 @@ export function QuickActionsPanel({
             </Button>
             <Button onClick={() => registrar.mutate()} disabled={registrar.isPending || !ocorrenciaId}>
               {registrar.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {mode === "whatsapp" ? "Registrar e abrir WhatsApp" : "Gerar PDF e registrar"}
+              Gerar PDF e registrar
             </Button>
           </DialogFooter>
         </DialogContent>
