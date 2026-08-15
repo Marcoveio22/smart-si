@@ -140,3 +140,68 @@ export async function criarRecuperacao(
   if (error) throw new Error(error.message);
   return data;
 }
+
+/** POST /ocorrencias — cria uma ocorrência (origem Manual) e seus produtos vinculados. */
+export async function criarOcorrenciaComProdutos(
+  supabase: DB,
+  userId: string,
+  input: {
+    lojaId: string;
+    numeroCartao: string;
+    tipo: string;
+    prioridade: "Baixa" | "Média" | "Alta" | "Crítica";
+    valorPerdido?: number;
+    descricao?: string | null;
+    observacoes?: string | null;
+    origem?: "Manual" | "Upload" | "Automática" | "Integração";
+    dataOcorrencia?: string | null;
+    produtos?: string[];
+  },
+) {
+  const { data, error } = await supabase
+    .from("ocorrencias")
+    .insert({
+      loja_id: input.lojaId,
+      numero_cartao: input.numeroCartao,
+      cliente_id: null,
+      tipo: input.tipo,
+      prioridade: input.prioridade,
+      valor_perdido: input.valorPerdido ?? 0,
+      descricao: input.descricao ?? null,
+      observacoes: input.observacoes ?? null,
+      origem: input.origem ?? "Manual",
+      status: "Nova",
+      data_ocorrencia: input.dataOcorrencia ?? new Date().toISOString(),
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  const produtos = (input.produtos ?? []).filter((p) => p && p.trim());
+  if (produtos.length) {
+    const { error: errProd } = await supabase.from("ocorrencia_produtos").insert(
+      produtos.map((descricao) => ({
+        ocorrencia_id: data.id,
+        produto_id: null,
+        loja_id: input.lojaId,
+        descricao,
+        quantidade: 1,
+        valor: 0,
+      })),
+    );
+    if (errProd) throw new Error(errProd.message);
+
+    // O trigger de produtos recalcula valor_perdido a partir dos itens (valor 0),
+    // então reaplicamos o prejuízo informado manualmente.
+    if ((input.valorPerdido ?? 0) > 0) {
+      const { error: errVal } = await supabase
+        .from("ocorrencias")
+        .update({ valor_perdido: input.valorPerdido ?? 0 })
+        .eq("id", data.id);
+      if (errVal) throw new Error(errVal.message);
+    }
+  }
+
+  return { id: data.id as string };
+}
