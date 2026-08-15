@@ -5,6 +5,7 @@ import { parseFilters } from "./filters";
 import {
   atualizarStatus,
   criarCobranca,
+  criarOcorrenciaComProdutos,
   criarRecuperacao,
   listarImagens,
   listarOcorrencias,
@@ -86,3 +87,24 @@ export const createRecuperacao = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(({ data, context }) => criarRecuperacao(context.supabase, context.userId, data));
+
+/** POST /ocorrencias — cria ocorrência manual (card de alerta) com produtos. */
+export const createOcorrenciaComProdutos = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        lojaId: z.string().uuid(),
+        numeroCartao: z.string().min(1).max(120),
+        tipo: z.string().min(1).max(60),
+        prioridade: z.enum(["Baixa", "Média", "Alta", "Crítica"]),
+        valorPerdido: z.number().nonnegative().optional(),
+        descricao: z.string().max(2000).nullish(),
+        observacoes: z.string().max(2000).nullish(),
+        origem: z.enum(["Manual", "Upload", "Automática", "Integração"]).optional(),
+        dataOcorrencia: z.string().nullish(),
+        produtos: z.array(z.string().max(200)).optional(),
+      })
+      .parse(d),
+  )
+  .handler(({ data, context }) => criarOcorrenciaComProdutos(context.supabase, context.userId, data));
