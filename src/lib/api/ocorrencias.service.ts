@@ -191,6 +191,16 @@ export async function criarOcorrenciaComProdutos(
       })),
     );
     if (errProd) throw new Error(errProd.message);
+
+    // O trigger de produtos recalcula valor_perdido a partir dos itens (valor 0),
+    // então reaplicamos o prejuízo informado manualmente.
+    if ((input.valorPerdido ?? 0) > 0) {
+      const { error: errVal } = await supabase
+        .from("ocorrencias")
+        .update({ valor_perdido: input.valorPerdido ?? 0 })
+        .eq("id", data.id);
+      if (errVal) throw new Error(errVal.message);
+    }
   }
 
   return { id: data.id as string };
