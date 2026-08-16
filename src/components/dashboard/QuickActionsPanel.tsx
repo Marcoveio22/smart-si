@@ -6,7 +6,7 @@ import { getOcorrencias, createCobranca } from "@/lib/api/ocorrencias.functions"
 import { queryKeys } from "@/lib/api/queryKeys";
 import { DashboardCard } from "./DashboardCard";
 import { QuickActionCard, type QuickAction } from "./QuickActionCard";
-import { WhatsAppChargeDialog } from "./WhatsAppChargeDialog";
+import { WhatsAppCardDialog } from "./WhatsAppCardDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -141,10 +141,9 @@ export function QuickActionsPanel({
         </div>
       </DashboardCard>
 
-      <WhatsAppChargeDialog
+      <WhatsAppCardDialog
         open={waOpen}
         onOpenChange={setWaOpen}
-        filters={filters}
         onDone={() => queryClient.invalidateQueries({ queryKey: ["dashboard"] })}
       />
 
