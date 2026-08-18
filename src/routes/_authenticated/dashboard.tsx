@@ -235,23 +235,60 @@ function Dashboard() {
 
 
   return (
-    <div className="space-y-8">
-      {/* Topo */}
-      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+    <div className="space-y-6">
+      {/* Topo — barra de controle interativa */}
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-extrabold tracking-tight">
-            {saudacao}, <span className="capitalize">{nome}</span>! 👋
-          </h1>
+          <h1 className="truncate text-2xl font-extrabold tracking-tight">Dashboard</h1>
           <p className="truncate text-sm text-muted-foreground">
-            Aqui está o resumo da sua operação — {lojaLabel}
+            {saudacao}, <span className="capitalize">{nome}</span> · visão geral da operação — {lojaLabel}
           </p>
         </div>
+
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          <PeriodFilter value={period} onChange={setPeriod} />
-          <Button variant="outline" size="sm" className="gap-2" onClick={() => setReportOpen(true)}>
-            <CalendarRange className="h-4 w-4" />
-            <span className="hidden sm:inline">Relatório</span>
-          </Button>
+          {Array.isArray(lojas) && lojas.length > 0 && (
+            <div className="flex h-9 items-center gap-2 rounded-lg border border-border/70 bg-card px-2">
+              <span className="text-[11px] font-semibold uppercase text-muted-foreground">Loja</span>
+              <Select
+                value={selectedLojaId ?? "__ALL__"}
+                onValueChange={(v) => setSelectedLojaId?.(v === "__ALL__" ? null : v)}
+              >
+                <SelectTrigger className="h-7 w-[150px] border-0 bg-transparent px-1 text-xs shadow-none focus:ring-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__ALL__">Todas as lojas</SelectItem>
+                  {lojas.map((l: any) => (
+                    <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="flex h-9 items-center gap-2 rounded-lg border border-border/70 bg-card px-3 text-xs text-muted-foreground">
+            <CalendarRange className="h-4 w-4 text-primary" />
+            <span className="whitespace-nowrap">{periodLabel(period)}</span>
+          </div>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="hidden sm:inline">Filtros</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64 space-y-3">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Período</p>
+                <PeriodFilter value={period} onChange={setPeriod} size="sm" />
+              </div>
+              <Button variant="outline" size="sm" className="w-full gap-2" onClick={() => setReportOpen(true)}>
+                <CalendarRange className="h-4 w-4" /> Relatório executivo
+              </Button>
+            </PopoverContent>
+          </Popover>
+
           <Button
             variant="outline"
             size="icon"
