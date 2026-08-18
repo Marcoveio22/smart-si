@@ -317,15 +317,15 @@ function Dashboard() {
 
           <MetricCard
             icon={DollarSign} label="Faturamento do Dia" value={brl(faturamentoTotal)}
-            delta={deltaFat} series={fatSeries} accent="var(--rating-trusted)" hint="acumulado do período"
+            delta={deltaFat} series={fatSeries} accent="var(--rating-trusted)" hint="vs. ontem"
           />
           <MetricCard
             icon={ShoppingCart} label="Compras do Dia" value={totalClientes.toLocaleString("pt-BR")}
-            delta={null} series={fatSeries} accent="var(--chart-1)" hint="base de clientes ativos"
+            delta={null} series={fatSeries} accent="var(--chart-1)" hint="vs. ontem"
           />
           <MetricCard
             icon={BellRing} label="Ocorrências do Dia" value={alertasAtivos}
-            delta={deltaAlertas} series={alertaSeries} accent="var(--destructive)" hint="alertas ativos"
+            delta={deltaAlertas} series={alertaSeries} accent="var(--destructive)" hint="vs. ontem"
           />
           <MetricCard
             icon={Trophy} label="Valores Recuperados" value={brl(financeiroQ.data?.valorRecuperado ?? 0)}
