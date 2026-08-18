@@ -102,7 +102,8 @@ function Dashboard() {
   const fetchHorarios = useServerFn(getDashboardHorarios);
   const fetchRecorrentes = useServerFn(getClientesRecorrentes);
   const fetchOcorrencias = useServerFn(getOcorrencias);
-  const { selectedLojaId, setSelectedLojaId, tenant, lojas } = useTenant() as any;
+  const { selectedLojaId, setSelectedLojaId, tenant } = useTenant() as any;
+  const lojas = (tenant?.lojas ?? []) as any[];
 
   const [period, setPeriod] = useState<PeriodKey>("30d");
   const [produtoPeriod, setProdutoPeriod] = useState<PeriodKey>("30d");
@@ -181,7 +182,7 @@ function Dashboard() {
 
 
   const lojaLabel =
-    (Array.isArray(lojas) ? lojas.find((l: any) => l.id === selectedLojaId)?.nome : null) ??
+    lojas.find((l: any) => l.id === selectedLojaId)?.nome ??
     (selectedLojaId ? "Loja selecionada" : "Todas as lojas");
 
   const statsReady = !isLoading && !!data;
@@ -248,7 +249,7 @@ function Dashboard() {
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {Array.isArray(lojas) && lojas.length > 0 && (
+          {lojas.length > 0 && (
             <div className="flex h-9 items-center gap-2 rounded-lg border border-border/70 bg-card px-2">
               <span className="text-[11px] font-semibold uppercase text-muted-foreground">Loja</span>
               <Select
@@ -259,7 +260,7 @@ function Dashboard() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__ALL__">Todas as lojas</SelectItem>
+                  {tenant?.isAdmin && <SelectItem value="__ALL__">Todas as lojas</SelectItem>}
                   {lojas.map((l: any) => (
                     <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
                   ))}
