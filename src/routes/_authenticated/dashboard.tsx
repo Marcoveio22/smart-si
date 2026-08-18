@@ -18,6 +18,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useTenant } from "@/hooks/useTenant";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RatingBadge } from "@/components/RatingBadge";
 import { StatusManualBadge } from "@/components/StatusManualBadge";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
@@ -37,7 +39,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Users, ShieldCheck, Gem, Crown, Award, AlertOctagon, BellRing, DollarSign, Flag, Circle, Loader2,
   ShoppingCart, Trophy, Percent, Send, Brain,
-  TrendingUp, Clock, PackageSearch, CalendarRange, ArrowRight, RefreshCw, AlertTriangle,
+  TrendingUp, Clock, PackageSearch, CalendarRange, ArrowRight, RefreshCw, AlertTriangle, SlidersHorizontal,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid,
@@ -100,7 +102,7 @@ function Dashboard() {
   const fetchHorarios = useServerFn(getDashboardHorarios);
   const fetchRecorrentes = useServerFn(getClientesRecorrentes);
   const fetchOcorrencias = useServerFn(getOcorrencias);
-  const { selectedLojaId, tenant, lojas } = useTenant() as any;
+  const { selectedLojaId, setSelectedLojaId, tenant, lojas } = useTenant() as any;
 
   const [period, setPeriod] = useState<PeriodKey>("30d");
   const [produtoPeriod, setProdutoPeriod] = useState<PeriodKey>("30d");
