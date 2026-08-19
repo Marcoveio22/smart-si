@@ -35,6 +35,7 @@ import { Route as AuthenticatedCobrancasWhatsappRouteImport } from './routes/_au
 import { Route as AuthenticatedConfiguracoesIndexRouteImport } from './routes/_authenticated/configuracoes.index'
 import { Route as AuthenticatedConfiguracoesLojaRouteImport } from './routes/_authenticated/configuracoes.loja'
 import { Route as AuthenticatedConfiguracoesUsuariosRouteImport } from './routes/_authenticated/configuracoes.usuarios'
+import { Route as ApiPublicSyncNayaxRouteImport } from './routes/api/public/sync-nayax'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -179,6 +180,11 @@ const AuthenticatedConfiguracoesUsuariosRoute =
     path: '/usuarios',
     getParentRoute: () => AuthenticatedConfiguracoesRoute,
   } as any)
+const ApiPublicSyncNayaxRoute = ApiPublicSyncNayaxRouteImport.update({
+  id: '/api/public/sync-nayax',
+  path: '/api/public/sync-nayax',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/cobrancas/whatsapp': typeof AuthenticatedCobrancasWhatsappRoute
   '/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/api/public/sync-nayax': typeof ApiPublicSyncNayaxRoute
   '/cobrancas/': typeof AuthenticatedCobrancasIndexRoute
   '/configuracoes/': typeof AuthenticatedConfiguracoesIndexRoute
 }
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/cobrancas/whatsapp': typeof AuthenticatedCobrancasWhatsappRoute
   '/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/api/public/sync-nayax': typeof ApiPublicSyncNayaxRoute
   '/cobrancas': typeof AuthenticatedCobrancasIndexRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesIndexRoute
 }
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/_authenticated/cobrancas/whatsapp': typeof AuthenticatedCobrancasWhatsappRoute
   '/_authenticated/configuracoes/loja': typeof AuthenticatedConfiguracoesLojaRoute
   '/_authenticated/configuracoes/usuarios': typeof AuthenticatedConfiguracoesUsuariosRoute
+  '/api/public/sync-nayax': typeof ApiPublicSyncNayaxRoute
   '/_authenticated/cobrancas/': typeof AuthenticatedCobrancasIndexRoute
   '/_authenticated/configuracoes/': typeof AuthenticatedConfiguracoesIndexRoute
 }
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/cobrancas/whatsapp'
     | '/configuracoes/loja'
     | '/configuracoes/usuarios'
+    | '/api/public/sync-nayax'
     | '/cobrancas/'
     | '/configuracoes/'
   fileRoutesByTo: FileRoutesByTo
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/cobrancas/whatsapp'
     | '/configuracoes/loja'
     | '/configuracoes/usuarios'
+    | '/api/public/sync-nayax'
     | '/cobrancas'
     | '/configuracoes'
   id:
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cobrancas/whatsapp'
     | '/_authenticated/configuracoes/loja'
     | '/_authenticated/configuracoes/usuarios'
+    | '/api/public/sync-nayax'
     | '/_authenticated/cobrancas/'
     | '/_authenticated/configuracoes/'
   fileRoutesById: FileRoutesById
@@ -353,6 +365,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicSyncNayaxRoute: typeof ApiPublicSyncNayaxRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -539,6 +552,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesUsuariosRouteImport
       parentRoute: typeof AuthenticatedConfiguracoesRoute
     }
+    '/api/public/sync-nayax': {
+      id: '/api/public/sync-nayax'
+      path: '/api/public/sync-nayax'
+      fullPath: '/api/public/sync-nayax'
+      preLoaderRoute: typeof ApiPublicSyncNayaxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -623,6 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicSyncNayaxRoute: ApiPublicSyncNayaxRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
