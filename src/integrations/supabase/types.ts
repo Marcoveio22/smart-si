@@ -267,6 +267,50 @@ export type Database = {
           },
         ]
       }
+      loja_nayax_credentials: {
+        Row: {
+          access_token: string
+          created_at: string
+          id: string
+          loja_id: string
+          status: string
+          ultima_sincronizacao: string | null
+          ultimo_erro: string | null
+          ultimo_id_processado: number | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          id?: string
+          loja_id: string
+          status?: string
+          ultima_sincronizacao?: string | null
+          ultimo_erro?: string | null
+          ultimo_id_processado?: number | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          loja_id?: string
+          status?: string
+          ultima_sincronizacao?: string | null
+          ultimo_erro?: string | null
+          ultimo_id_processado?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loja_nayax_credentials_loja_id_fkey"
+            columns: ["loja_id"]
+            isOneToOne: true
+            referencedRelation: "lojas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lojas: {
         Row: {
           ativo: boolean
@@ -889,6 +933,7 @@ export type Database = {
           data_transacao: string
           id: string
           loja_id: string | null
+          nayax_transaction_id: number | null
           numero_cartao: string | null
           status: string | null
           valor: number
@@ -899,6 +944,7 @@ export type Database = {
           data_transacao?: string
           id?: string
           loja_id?: string | null
+          nayax_transaction_id?: number | null
           numero_cartao?: string | null
           status?: string | null
           valor?: number
@@ -909,6 +955,7 @@ export type Database = {
           data_transacao?: string
           id?: string
           loja_id?: string | null
+          nayax_transaction_id?: number | null
           numero_cartao?: string | null
           status?: string | null
           valor?: number
