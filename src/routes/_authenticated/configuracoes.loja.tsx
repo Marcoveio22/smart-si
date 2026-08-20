@@ -68,6 +68,8 @@ function LojaPage() {
           ) : <div className="text-muted-foreground">Nenhum processamento registrado ainda.</div>}
         </CardContent>
       </Card>
+
+      {loja?.id && <NayaxTokenCard lojaId={loja.id} />}
     </div>
   );
 }
