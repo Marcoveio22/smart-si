@@ -5,6 +5,7 @@ import { getLojaStats } from "@/lib/tenant.functions";
 import { useTenant } from "@/hooks/useTenant";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Store, Users, Receipt, Bell, Cpu, Loader2, Building2 } from "lucide-react";
+import { NayaxTokenCard } from "@/components/configuracoes/NayaxTokenCard";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/loja")({ component: LojaPage });
 
