@@ -32,8 +32,30 @@ export function NayaxTokenCard({ lojaId }: { lojaId: string }) {
     onError: (e: any) => toast.error(e?.message ?? "Não foi possível salvar o token"),
   });
 
-  // Sem permissão (não é admin desta loja): não exibe o cartão.
-  if (error) return null;
+  // Sem permissão (não é admin com vínculo nesta loja): explica em vez de esconder.
+  if (error) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+          <div className="h-9 w-9 rounded-md bg-muted text-muted-foreground flex items-center justify-center">
+            <KeyRound className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <CardTitle className="text-base">Integração Nayax</CardTitle>
+            <div className="text-xs text-muted-foreground">
+              Sem permissão para gerenciar o token desta loja
+            </div>
+          </div>
+          <Badge variant="secondary">Bloqueado</Badge>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          Apenas administradores com vínculo nesta loja podem cadastrar o token Nayax. Peça a um
+          administrador para vincular seu usuário a esta loja em Configurações · Usuários &amp; Lojas.
+        </CardContent>
+      </Card>
+    );
+  }
+
 
   return (
     <Card>

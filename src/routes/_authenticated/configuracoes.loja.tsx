@@ -19,7 +19,18 @@ function LojaPage() {
   });
 
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground"><Loader2 className="h-5 w-5 mr-2 animate-spin" />Carregando dados da loja...</div>;
-  if (!data) return <div className="text-muted-foreground">Nenhuma loja selecionada.</div>;
+  if (!data)
+    return (
+      <div className="max-w-xl space-y-2">
+        <h1 className="text-2xl font-bold">Configurações · Loja</h1>
+        <p className="text-sm text-muted-foreground">
+          Nenhuma loja selecionada. Escolha uma loja no seletor do topo do Dashboard (ou peça a um
+          administrador para vincular seu usuário a uma loja) para ver os dados e configurar a
+          integração Nayax.
+        </p>
+      </div>
+    );
+
 
   const { loja, clientes, transacoes, alertas, processamentos, ultimoProcessamento } = data;
 
