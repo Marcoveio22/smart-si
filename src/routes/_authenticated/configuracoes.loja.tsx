@@ -4,10 +4,33 @@ import { useServerFn } from "@tanstack/react-start";
 import { getLojaStats } from "@/lib/tenant.functions";
 import { useTenant } from "@/hooks/useTenant";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Store, Users, Receipt, Bell, Cpu, Loader2, Building2 } from "lucide-react";
 import { NayaxTokenCard } from "@/components/configuracoes/NayaxTokenCard";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/loja")({ component: LojaPage });
+
+function LojaSelect() {
+  const { tenant, selectedLojaId, setSelectedLojaId } = useTenant();
+  const lojas = tenant?.lojas ?? [];
+  if (lojas.length < 2) return null;
+  return (
+    <div className="w-full sm:w-80">
+      <Select value={selectedLojaId ?? tenant?.lojaId ?? ""} onValueChange={(v) => setSelectedLojaId(v)}>
+        <SelectTrigger>
+          <SelectValue placeholder="Selecione a loja" />
+        </SelectTrigger>
+        <SelectContent>
+          {lojas.map((l) => (
+            <SelectItem key={l.id} value={l.id}>
+              {l.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 function LojaPage() {
   const fetchStats = useServerFn(getLojaStats);
@@ -21,13 +44,13 @@ function LojaPage() {
   if (isLoading) return <div className="flex items-center justify-center h-64 text-muted-foreground"><Loader2 className="h-5 w-5 mr-2 animate-spin" />Carregando dados da loja...</div>;
   if (!data)
     return (
-      <div className="max-w-xl space-y-2">
+      <div className="max-w-xl space-y-4">
         <h1 className="text-2xl font-bold">Configurações · Loja</h1>
         <p className="text-sm text-muted-foreground">
-          Nenhuma loja selecionada. Escolha uma loja no seletor do topo do Dashboard (ou peça a um
-          administrador para vincular seu usuário a uma loja) para ver os dados e configurar a
-          integração Nayax.
+          Selecione abaixo a loja que deseja configurar (ex.: SPAZIO JARDIM IMPERIAL) para ver os
+          dados e cadastrar o token da integração Nayax.
         </p>
+        <LojaSelect />
       </div>
     );
 
@@ -36,10 +59,14 @@ function LojaPage() {
 
   return (
     <div className="space-y-6 max-w-5xl">
-      <div>
-        <h1 className="text-2xl font-bold">Configurações · Loja</h1>
-        <p className="text-sm text-muted-foreground">Informações e indicadores da loja selecionada</p>
+      <div className="space-y-3">
+        <div>
+          <h1 className="text-2xl font-bold">Configurações · Loja</h1>
+          <p className="text-sm text-muted-foreground">Informações, indicadores e integração Nayax da loja selecionada</p>
+        </div>
+        <LojaSelect />
       </div>
+
 
       <Card>
         <CardHeader className="flex flex-row items-center gap-3 space-y-0">

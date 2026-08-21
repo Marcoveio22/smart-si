@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   LayoutDashboard, Users, Bell, FileWarning, Cpu, UploadCloud, Settings, ShieldCheck, LogOut,
   Store, UserCog, DollarSign, MessageCircle, FileText, History, GraduationCap, Lightbulb, Bot,
-  ChevronDown, ChevronsUpDown,
+  ChevronDown, ChevronsUpDown, KeyRound,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -43,7 +43,10 @@ const treinamentos: Item[] = [
   { title: "Suporte da IA", url: "/suporte-ia", icon: Bot },
 ];
 const configuracoes: Item[] = [{ title: "Configurações", url: "/configuracoes", icon: Settings }];
-const adminItems: Item[] = [{ title: "Usuários & Lojas", url: "/configuracoes/usuarios", icon: UserCog }];
+const adminItems: Item[] = [
+  { title: "Usuários & Lojas", url: "/configuracoes/usuarios", icon: UserCog },
+  { title: "Integração Nayax", url: "/configuracoes/loja", icon: KeyRound },
+];
 
 export function AppSidebar() {
   const { state } = useSidebar();
