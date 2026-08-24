@@ -33,11 +33,15 @@ async function sincronizar() {
         access_token: cred.access_token,
         per_page: '1000',
       });
+
+      // end_date é obrigatório na prática em toda chamada à API da Nayax,
+      // mesmo no modo incremental (transaction_id_greater_than).
+      params.set('end_date', new Date().toISOString());
+
       if (cred.ultimo_id_processado) {
         params.set('transaction_id_greater_than', String(cred.ultimo_id_processado));
       } else {
         params.set('start_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
-        params.set('end_date', new Date().toISOString());
       }
 
       const resp = await fetch(`${NAYAX_BASE}/cashless_facts?${params.toString()}`);
