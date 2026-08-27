@@ -29,25 +29,46 @@ async function sincronizar() {
       // 1. Monta a URL — incremental por transaction_id quando já houve sincronização,
       //    senão usa as últimas 24h como ponto de partida (start_date + end_date são
       //    obrigatórios na prática).
-      const params = new URLSearchParams({
+      const baseParams = new URLSearchParams({
         access_token: cred.access_token,
         per_page: '1000',
       });
 
       // end_date é obrigatório na prática em toda chamada à API da Nayax,
       // mesmo no modo incremental (transaction_id_greater_than).
-      params.set('end_date', new Date().toISOString());
+      baseParams.set('end_date', new Date().toISOString());
 
       if (cred.ultimo_id_processado) {
-        params.set('transaction_id_greater_than', String(cred.ultimo_id_processado));
+        baseParams.set('transaction_id_greater_than', String(cred.ultimo_id_processado));
       } else {
-        params.set('start_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+        baseParams.set('start_date', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
       }
 
-      const resp = await fetch(`${NAYAX_BASE}/cashless_facts?${params.toString()}`);
-      if (!resp.ok) throw new Error(`Nayax respondeu ${resp.status}`);
-      const payload = await resp.json();
-      const transacoesNayax: any[] = Array.isArray(payload) ? payload : (payload?.data ?? []);
+      // A API da Nayax não retorna total_count/has_more, então paginamos
+      // incrementando "page" até vir uma resposta vazia.
+      const transacoesNayax: any[] = [];
+      let pagina = 1;
+      const MAX_PAGINAS = 50; // proteção contra loop infinito em caso de comportamento inesperado da API
+
+      while (pagina <= MAX_PAGINAS) {
+        const params = new URLSearchParams(baseParams);
+        params.set('page', String(pagina));
+
+        const resp = await fetch(`${NAYAX_BASE}/cashless_facts?${params.toString()}`);
+        if (!resp.ok) throw new Error(`Nayax respondeu ${resp.status} na página ${pagina}`);
+
+        const payload = await resp.json();
+        const paginaTransacoes: any[] = Array.isArray(payload) ? payload : (payload?.data ?? []);
+
+        if (paginaTransacoes.length === 0) break;
+
+        transacoesNayax.push(...paginaTransacoes);
+
+        // Se a página veio com menos itens que o per_page pedido, é a última página.
+        if (paginaTransacoes.length < 1000) break;
+
+        pagina++;
+      }
 
       let maiorId = cred.ultimo_id_processado ?? 0;
       let clientesAtualizados = 0;
