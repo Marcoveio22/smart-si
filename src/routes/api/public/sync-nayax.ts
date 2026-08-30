@@ -118,6 +118,11 @@ async function sincronizar() {
         }
 
         // 3. Upsert por nayax_transaction_id evita duplicidade em reprocessamento.
+        const tipoPagamentoMap: Record<string, string> = {
+          eft_pinpad: 'TEF pinpad',
+          external_authorizer_vmlink: 'Autorizador Externo (vmlink)',
+        };
+
         const { error: transErr } = await admin.from('transacoes').upsert(
           {
             nayax_transaction_id: Number(t.id),
@@ -127,6 +132,8 @@ async function sincronizar() {
             valor: t.value ?? 0,
             data_transacao: t.occurred_at,
             status: t.status ?? null,
+            produto: t.good?.name ?? null,
+            tipo_pagamento: tipoPagamentoMap[t.kind] ?? t.kind ?? null,
           },
           { onConflict: 'nayax_transaction_id' },
         );
