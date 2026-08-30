@@ -1,0 +1,1 @@
+alter table transacoes add column if not exists produto text, add column if not exists tipo_pagamento text;
