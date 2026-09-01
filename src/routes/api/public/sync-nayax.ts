@@ -155,6 +155,9 @@ async function sincronizar() {
         ok: true,
         transacoes: transacoesNayax.length,
         clientes_atualizados: clientesAtualizados,
+        _debug_amostra: transacoesNayax[0]
+          ? { id: transacoesNayax[0].id, good: transacoesNayax[0].good, kind: transacoesNayax[0].kind }
+          : null,
       });
     } catch (lojaErr: any) {
       await admin
