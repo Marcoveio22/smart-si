@@ -58,7 +58,7 @@ export function DailyReportPanel({ lojaId, lojaLabel }: { lojaId: string | null;
   };
 
   return (
-    <DashboardCard title="Relatório Diário" icon={<FileSpreadsheet className="h-5 w-5" />}>
+    <DashboardCard title="Relatório Diário" icon={FileSpreadsheet}>
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
           Gera a planilha de conferência (base diária, alertas, monitoramento e clientes classificados) para {lojaLabel}.
