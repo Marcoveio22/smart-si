@@ -32,6 +32,7 @@ import { RecurringClientModal, type RecurringClientRow } from "@/components/dash
 import { OccurrenceDetailsModal } from "@/components/dashboard/OccurrenceDetailsModal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecoveredHighlightCard } from "@/components/dashboard/RecoveredHighlightCard";
+import { DailyReportPanel } from "@/components/dashboard/DailyReportPanel";
 import { HorizontalScroller } from "@/components/dashboard/HorizontalScroller";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -422,6 +423,13 @@ function Dashboard() {
             {RECOMENDACOES.map((r) => <RecommendationCard key={r.id} item={r} />)}
           </div>
         </DashboardCard>
+
+        <DailyReportPanel lojaId={selectedLojaId ?? null} lojaLabel={lojaLabel} />
+      </section>
+
+      {/* Relatório diário de conferência */}
+      <section>
+        <DailyReportPanel lojaId={selectedLojaId ?? null} lojaLabel={lojaLabel} />
       </section>
 
       {/* Linha 5 — ocorrências recentes */}
