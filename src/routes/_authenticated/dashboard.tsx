@@ -424,7 +424,6 @@ function Dashboard() {
           </div>
         </DashboardCard>
 
-        <DailyReportPanel lojaId={selectedLojaId ?? null} lojaLabel={lojaLabel} />
       </section>
 
       {/* Relatório diário de conferência */}
