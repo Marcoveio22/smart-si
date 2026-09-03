@@ -55,14 +55,27 @@ export const gerarRelatorioDiario = createServerFn({ method: "POST" })
     const offsetDias = data.dia === "hoje" ? 0 : -1;
     const { inicioUTC, fimUTC, label } = rangeDiaBRT(offsetDias);
 
-    const { data: transacoes, error: txErr } = await supabaseAdmin
-      .from("transacoes")
-      .select("numero_cartao, produto, tipo_pagamento, valor, data_transacao")
-      .eq("loja_id", data.loja_id)
-      .gte("data_transacao", inicioUTC.toISOString())
-      .lt("data_transacao", fimUTC.toISOString())
-      .order("data_transacao", { ascending: false });
-    if (txErr) throw txErr;
+    const transacoes: any[] = [];
+    {
+      const TAMANHO_PAGINA = 1000;
+      let desde = 0;
+      while (true) {
+        const { data: pagina, error: txErr } = await supabaseAdmin
+          .from("transacoes")
+          .select("numero_cartao, produto, tipo_pagamento, valor, data_transacao")
+          .eq("loja_id", data.loja_id)
+          .gte("data_transacao", inicioUTC.toISOString())
+          .lt("data_transacao", fimUTC.toISOString())
+          .order("data_transacao", { ascending: false })
+          .range(desde, desde + TAMANHO_PAGINA - 1);
+        if (txErr) throw txErr;
+        if (!pagina || pagina.length === 0) break;
+        transacoes.push(...pagina);
+        if (pagina.length < TAMANHO_PAGINA) break;
+        desde += TAMANHO_PAGINA;
+      }
+    }
+
 
     const cartoes = Array.from(new Set(
       (transacoes ?? []).map((t) => t.numero_cartao).filter((c): c is string => !!c)
