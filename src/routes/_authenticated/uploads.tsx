@@ -110,6 +110,31 @@ function UploadsPage() {
         <p className="text-sm text-muted-foreground">Envie as planilhas Base Diária e Base Histórica para execução da engine HonestGuard</p>
       </div>
 
+      <Card className={lojaEscolhida ? "border-[var(--rating-trusted)]/50" : "border-destructive/50"}>
+        <CardContent className="p-4 space-y-2">
+          <Label>Loja de destino deste processamento</Label>
+          <select
+            className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm"
+            value={lojaEscolhida}
+            onChange={(e) => setLojaEscolhida(e.target.value)}
+          >
+            <option value="">Selecione a loja...</option>
+            {lojas.map((l: any) => (
+              <option key={l.id} value={l.id}>{l.nome}</option>
+            ))}
+          </select>
+          {lojaEscolhida ? (
+            <p className="text-sm font-semibold text-[var(--rating-trusted)]">
+              ✓ Este processamento será gravado para: {lojas.find((l: any) => l.id === lojaEscolhida)?.nome ?? lojaEscolhida}
+            </p>
+          ) : (
+            <p className="text-sm font-semibold text-destructive">
+              ⚠ Nenhuma loja selecionada — escolha antes de enviar arquivos
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle className="text-base">Novo Processamento</CardTitle></CardHeader>
         <CardContent className="space-y-4">
