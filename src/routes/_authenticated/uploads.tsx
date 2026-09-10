@@ -36,7 +36,11 @@ function UploadsPage() {
   const qc = useQueryClient();
   const processar = useServerFn(processarArquivos);
   const getUrl = useServerFn(getConsolidadoUrl);
-  const { selectedLojaId, tenant } = useTenant();
+  const { tenant } = useTenant();
+
+  const lojas = (tenant?.lojas ?? []) as any[];
+
+  const [lojaEscolhida, setLojaEscolhida] = useState<string>("");
 
   const baixarConsolidado = async (path: string) => {
     try {
