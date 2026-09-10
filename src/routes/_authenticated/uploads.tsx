@@ -55,12 +55,13 @@ function UploadsPage() {
   const [errMsg, setErrMsg] = useState<string>("");
 
   const { data: history = [] } = useQuery({
-    queryKey: ["upload-history", selectedLojaId ?? "own"],
+    queryKey: ["upload-history", lojaEscolhida || "none"],
     queryFn: async () => {
       let q = supabase.from("processamentos").select("*").order("created_at", { ascending: false }).limit(20);
-      if (selectedLojaId) q = q.eq("loja_id", selectedLojaId);
+      if (lojaEscolhida) q = q.eq("loja_id", lojaEscolhida);
       return (await q).data ?? [];
     },
+    enabled: !!lojaEscolhida,
     refetchInterval: phase === "processing" ? 2000 : false,
   });
 
