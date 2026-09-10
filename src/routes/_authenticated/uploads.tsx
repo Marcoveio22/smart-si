@@ -36,7 +36,11 @@ function UploadsPage() {
   const qc = useQueryClient();
   const processar = useServerFn(processarArquivos);
   const getUrl = useServerFn(getConsolidadoUrl);
-  const { selectedLojaId, tenant } = useTenant();
+  const { tenant } = useTenant();
+
+  const lojas = (tenant?.lojas ?? []) as any[];
+
+  const [lojaEscolhida, setLojaEscolhida] = useState<string>("");
 
   const baixarConsolidado = async (path: string) => {
     try {
@@ -51,19 +55,20 @@ function UploadsPage() {
   const [errMsg, setErrMsg] = useState<string>("");
 
   const { data: history = [] } = useQuery({
-    queryKey: ["upload-history", selectedLojaId ?? "own"],
+    queryKey: ["upload-history", lojaEscolhida || "none"],
     queryFn: async () => {
       let q = supabase.from("processamentos").select("*").order("created_at", { ascending: false }).limit(20);
-      if (selectedLojaId) q = q.eq("loja_id", selectedLojaId);
+      if (lojaEscolhida) q = q.eq("loja_id", lojaEscolhida);
       return (await q).data ?? [];
     },
+    enabled: !!lojaEscolhida,
     refetchInterval: phase === "processing" ? 2000 : false,
   });
 
   const run = async () => {
     if (!diaria || !historico) { toast.error("Envie os dois arquivos"); return; }
-    const lojaAlvo = selectedLojaId ?? tenant?.lojaId ?? null;
-    if (!lojaAlvo) { toast.error("Selecione uma loja no cabeçalho antes de processar"); return; }
+    const lojaAlvo = lojaEscolhida || null;
+    if (!lojaAlvo) { toast.error("Selecione a loja de destino antes de processar"); return; }
     setPhase("uploading"); setSummary(null); setErrMsg("");
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -105,13 +110,38 @@ function UploadsPage() {
         <p className="text-sm text-muted-foreground">Envie as planilhas Base Diária e Base Histórica para execução da engine HonestGuard</p>
       </div>
 
+      <Card className={lojaEscolhida ? "border-[var(--rating-trusted)]/50" : "border-destructive/50"}>
+        <CardContent className="p-4 space-y-2">
+          <Label>Loja de destino deste processamento</Label>
+          <select
+            className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm"
+            value={lojaEscolhida}
+            onChange={(e) => setLojaEscolhida(e.target.value)}
+          >
+            <option value="">Selecione a loja...</option>
+            {lojas.map((l: any) => (
+              <option key={l.id} value={l.id}>{l.nome}</option>
+            ))}
+          </select>
+          {lojaEscolhida ? (
+            <p className="text-sm font-semibold text-[var(--rating-trusted)]">
+              ✓ Este processamento será gravado para: {lojas.find((l: any) => l.id === lojaEscolhida)?.nome ?? lojaEscolhida}
+            </p>
+          ) : (
+            <p className="text-sm font-semibold text-destructive">
+              ⚠ Nenhuma loja selecionada — escolha antes de enviar arquivos
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle className="text-base">Novo Processamento</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <FileSlot label="Arquivo Diário (BASE_DIARIA.xlsx)" file={diaria} setFile={setDiaria} />
           <FileSlot label="Arquivo Histórico (BASE_CLIENTES_HISTORICO.xlsx)" file={historico} setFile={setHistorico} />
 
-          <Button onClick={run} disabled={phase === "uploading" || phase === "processing" || !diaria || !historico} size="lg" className="w-full">
+          <Button onClick={run} disabled={phase === "uploading" || phase === "processing" || !diaria || !historico || !lojaEscolhida} size="lg" className="w-full">
             {phase === "uploading" && <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Enviando arquivos...</>}
             {phase === "processing" && <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando engine HonestGuard...</>}
             {(phase === "idle" || phase === "done" || phase === "error") && <><UploadCloud className="h-4 w-4 mr-2" />PROCESSAR ARQUIVOS</>}
