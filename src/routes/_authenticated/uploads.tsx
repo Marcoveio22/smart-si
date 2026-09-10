@@ -141,7 +141,7 @@ function UploadsPage() {
           <FileSlot label="Arquivo Diário (BASE_DIARIA.xlsx)" file={diaria} setFile={setDiaria} />
           <FileSlot label="Arquivo Histórico (BASE_CLIENTES_HISTORICO.xlsx)" file={historico} setFile={setHistorico} />
 
-          <Button onClick={run} disabled={phase === "uploading" || phase === "processing" || !diaria || !historico} size="lg" className="w-full">
+          <Button onClick={run} disabled={phase === "uploading" || phase === "processing" || !diaria || !historico || !lojaEscolhida} size="lg" className="w-full">
             {phase === "uploading" && <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Enviando arquivos...</>}
             {phase === "processing" && <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando engine HonestGuard...</>}
             {(phase === "idle" || phase === "done" || phase === "error") && <><UploadCloud className="h-4 w-4 mr-2" />PROCESSAR ARQUIVOS</>}
