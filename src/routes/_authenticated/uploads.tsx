@@ -66,8 +66,8 @@ function UploadsPage() {
 
   const run = async () => {
     if (!diaria || !historico) { toast.error("Envie os dois arquivos"); return; }
-    const lojaAlvo = selectedLojaId ?? tenant?.lojaId ?? null;
-    if (!lojaAlvo) { toast.error("Selecione uma loja no cabeçalho antes de processar"); return; }
+    const lojaAlvo = lojaEscolhida || null;
+    if (!lojaAlvo) { toast.error("Selecione a loja de destino antes de processar"); return; }
     setPhase("uploading"); setSummary(null); setErrMsg("");
     try {
       const { data: { user } } = await supabase.auth.getUser();
