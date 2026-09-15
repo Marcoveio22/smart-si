@@ -6,8 +6,9 @@ import * as XLSX from "xlsx-js-style";
 const PIX_TOKEN = "PIX";
 
 function fmtDataHora(d: Date): string {
+  const brt = new Date(d.getTime() - 3 * 60 * 60 * 1000);
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  return `${pad(brt.getUTCDate())}/${pad(brt.getUTCMonth() + 1)}/${brt.getUTCFullYear()} ${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}:${pad(brt.getUTCSeconds())}`;
 }
 
 // Calcula início/fim (em UTC) de um dia no horário de Brasília (UTC-3, sem horário de verão).
